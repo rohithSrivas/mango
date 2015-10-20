@@ -133,6 +133,9 @@ STAGE 2 PARAMETERS
 ``shortreads``
  should bowtie alignments be done using paramter for very short reads (~20 bp). default = TRUE
 
+``downsample_rate``
+ fraction of mapped reads to retain for downstream analysis [should range from 0 to 1.0]. default = 1.0
+
 
 STAGE 4 PARAMETERS
 ~~~~~~~~~~
