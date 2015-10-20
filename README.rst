@@ -1,7 +1,7 @@
 Mango
 =====
 
-ChIA-PET Analysis Software
+ChIA-PET Analysis Software. This is a fork of Doug Phanstiel's project. All credit should be given below:
 
 
 Citation
@@ -18,7 +18,7 @@ Mango Installation
 
  a) hash
  b) Rcpp
- c) optparse testing
+ c) optparse
 
 They can be installed throug CRAN. For example to install the package 'hash' open R and type the following
 
