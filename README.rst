@@ -18,7 +18,7 @@ Mango Installation
 
  a) hash
  b) Rcpp
- c) optparse
+ c) optparse testing
 
 They can be installed throug CRAN. For example to install the package 'hash' open R and type the following
 
