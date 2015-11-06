@@ -2,7 +2,7 @@
 \alias{alignBowtie}
 \title{aligns reads using bowtie}
 \usage{
-alignBowtie(fastq, output, bowtiepath, bowtieref, shortreads, verbose = TRUE)
+alignBowtie(fastq, output, bowtiepath, bowtieref, shortreads, num.threads=1, verbose = TRUE)
 }
 \arguments{
   \item{fastq}{full path to fastq file}
@@ -17,6 +17,8 @@ alignBowtie(fastq, output, bowtiepath, bowtieref, shortreads, verbose = TRUE)
 
   \item{nlines}{the number of lines to look at to determine
   the scoring method}
+  
+  \item{num.threads} {The number of parallel search threads to use for alignment}
 }
 \description{
 This function aligns reads using bowtie
