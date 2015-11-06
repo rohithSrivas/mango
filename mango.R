@@ -46,6 +46,7 @@ option_list <- list(
   #---------- STAGE 2 PARAMETERS ----------#
   
   make_option(c("--shortreads"),  default="TRUE",help="should bowtie alignments be done using paramter for very short reads (~20 bp)"),
+  make_option(c("--downsample_rate"),  default="1.0",help="should bowtie alignments be done using paramter for very short reads (~20 bp)"),
 
   #---------- STAGE 4 PARAMETERS ----------#
   
@@ -244,6 +245,8 @@ if (2 %in% opt$stages)
   # align both ends of each PET
   alignBowtie(fastq=fastq1,output=sam1,bowtiepath=bowtiepath,bowtieref=bowtieref,shortreads)
   alignBowtie(fastq=fastq2,output=sam2,bowtiepath=bowtiepath,bowtieref=bowtieref,shortreads)
+  
+  # down sample the aligned files to keep the requested 
 }
 
 ##################################### filter reads #####################################
