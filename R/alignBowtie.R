@@ -8,19 +8,19 @@
 #' @param arguments arguments to give to bowtie
 #' @param verbose boolean whether or not to print command
 #' @param nlines the number of lines to look at to determine the scoring method
+#' @param num.threads The number of parallel search threads to use for alignment
 #' @export
 #' 
 alignBowtie <- function(fastq,output,bowtiepath,bowtieref,
-                        shortreads,verbose=TRUE)
+                        shortreads,num.threads=1,verbose=TRUE)
 {
   
   # choose alignment parameters
   # note- "-m 1" ensures that only uniquely mapped reads are reported.
-  bowtievar="-S -v 0 -k 1 --chunkmbs 500 --sam-nohead --mapq 40 -m 1"
+  bowtievar=paste("-S -v 0 -k 1 --chunkmbs 500 --sam-nohead --mapq 40 -m 1 -p ",num.threads,sep="")
   if (shortreads == FALSE)
   {
-    #bowtievar="-S -v 2 -k 1 --sam-nohead --mapq 40 -m 1 --best"
-    bowtievar="-S -n 2 -l 50 -k 1 --chunkmbs 500 --sam-nohead --mapq 40 -m 1 --best"
+    bowtievar=paste("-S -n 2 -l 50 -k 1 --chunkmbs 500 --sam-nohead --mapq 40 -m 1 --best -p ",num.threads,sep="")
   }
   
   # determine the illumina score encoding
