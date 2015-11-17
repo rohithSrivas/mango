@@ -18,6 +18,8 @@ using namespace Rcpp;
 #include <boost/iostreams/copy.hpp>
 #include <boost/iostreams/filter/gzip.hpp>
 #include "mergesort.h"
+#include "api/BamReader.h"
+#include "api/BamWriter.h"
 using namespace std;
 
 
@@ -47,6 +49,211 @@ std::vector<std::string> string_split( const std::string& s, const std::string& 
         from = to + delimiter.size();
     }
     return result;
+}
+
+//	Define a new function for parsing a FASTQ which does not require it to be unzipped
+// [[Rcpp::export]]
+std::vector< int > parseFastq_gzip(	std::string fastq1, std::fastq2, std::string basename,
+									int minlength = 15, int maxlength = 25,
+									bool keepempty = false, bool verbose = true,
+									std::string linker1 = "GTTGGATAAG", std::string linker2 = "GTTGGAATGT")
+{
+	// setup input gzip streamers
+	std::ifstream file1(fastq1.c_str(), std::ios_base::in | std::ios_base::binary);
+	std::ifstream file2(fastq2.c_str(), std::ios_base::in | std::ios_base::binary);
+	boost::iostreams::filtering_streambuf<boost::iostreams::input> inbuf1;
+	boost::iostreams::filtering_streambuf<boost::iostreams::input> inbuf2;
+    inbuf1.push(boost::iostreams::gzip_decompressor()); inbuf1.push(file1);
+	inbuf2.push(boost::iostreams::gzip_decompressor()); inbuf2.push(file2);
+	std::istream instream1(&inbuf1);
+	std::istream instream2(&inbuf2);
+	
+	// setup the output streams
+    ofstream same1 ( (basename + "_1.same.fastq").c_str() );
+    ofstream same2 ( (basename + "_2.same.fastq").c_str() );
+    ofstream chim1 ( (basename + "_1.chim.fastq").c_str() );
+    ofstream chim2 ( (basename + "_2.chim.fastq").c_str() );
+	
+	//define variables for keeping track of PET types
+	int samecount = 0;
+	int chimcount = 0;
+	int ambicount = 0;
+	
+	//define some iterating variables
+    std::string fqline1;
+    std::string fqline2;
+    int linecount = 0;
+    int i = 0;
+    std::vector<std::string> lines1;
+    std::vector<std::string> lines2;
+	
+	//begin iterating
+	while(std::getline(instream1, fqline1))
+	{
+		//read paired end 2 lines and increment counters
+		std::getline(instream2,fqline2);
+		i++;
+		linecount++;
+		
+        // add lines to list
+        lines1.push_back(fqline1);
+        lines2.push_back(fqline2);
+		
+        // if list length is 4 perform operations, print, and clear lists
+        if ( i == 4 )
+        {
+            // find the position of the linkers
+            size_t r1l1found = lines1[1].find(linker1);
+            size_t r1l2found = lines1[1].find(linker2);
+            size_t r2l1found = lines2[1].find(linker1);
+            size_t r2l2found = lines2[1].find(linker2);
+			
+            // determine the linker type (0 = none, 3 = both)
+            // read 1
+            int r1linker;
+            if (r1l1found == -1 & r1l2found == -1)
+            {
+                r1linker = 0;
+            }
+            else if (r1l1found != -1 & r1l2found == -1)
+            {
+                r1linker = 1;
+                lines1[1] =  lines1[1].substr (0,r1l1found);
+                lines1[3] =  lines1[3].substr (0,r1l1found);
+            }
+            else if (r1l1found == -1 & r1l2found != -1)
+            {
+                r1linker = 2;
+                lines1[1] =  lines1[1].substr (0,r1l2found);
+                lines1[3] =  lines1[3].substr (0,r1l2found);
+            }
+            else if (r1l1found != -1 & r1l2found != -1)
+            {
+                r1linker = 3;
+            }
+            
+            // read 2
+            int r2linker;
+            if (r2l1found == -1 & r2l2found == -1)
+            {
+                r2linker = 0;
+            }
+            else if (r2l1found != -1 & r2l2found == -1)
+            {
+                r2linker = 1;
+                lines2[1] =  lines2[1].substr (0,r2l1found);
+                lines2[3] =  lines2[3].substr (0,r2l1found);
+            }
+            else if (r2l1found == -1 & r2l2found != -1)
+            {
+                r2linker = 2;
+                lines2[1] =  lines2[1].substr (0,r2l2found);
+                lines2[3] =  lines2[3].substr (0,r2l2found);
+            }
+            else if (r2l1found != -1 & r2l2found != -1)
+            {
+                r2linker = 3;
+            }
+            
+            // determine pairtype
+            std::string pairtype = "unknown";
+            if ((r1linker == 1 && r2linker == 1) || (r1linker == 2 && r2linker == 2))
+            {
+                pairtype = "same";
+            }
+            if ((r1linker == 1 && r2linker == 2) || (r1linker == 2 && r2linker == 1))
+            {
+                pairtype = "chim";
+            }
+            if (r1linker == 3 || r2linker == 3)
+            {
+                pairtype = "ambi";   
+            }
+            if (keepempty == true)
+            {
+                if ((r1linker == 0 && r2linker == 1) ||
+                    (r1linker == 0 && r2linker == 2) ||
+                    (r1linker == 1 && r2linker == 0) ||
+                    (r1linker == 2 && r2linker == 0) ||
+                    (r1linker == 0 && r2linker == 0))
+                {
+                    pairtype = "same";
+                }
+            }
+            if (keepempty == false)
+            {
+                if (r1linker == 0 || r2linker == 0)
+                {
+                    pairtype = "ambi";
+                }
+            }
+            
+            // add to counters
+            if (pairtype == "same")
+            {
+              samecount++;
+            }
+            if (pairtype == "chim")
+            {
+              chimcount++;
+            }
+            if (pairtype == "ambi")
+            {
+              ambicount++;
+            }
+            
+            // determine if they pass the size requirements and print to output
+            if ((lines1[1].length() >= minlength ) &&  (lines1[1].length() <= maxlength ) &&
+                (lines2[1].length() >= minlength ) &&  (lines2[1].length() <= maxlength ))
+            {
+                if (pairtype == "same")
+                {
+                    same1 << vector_join(lines1,"\n");
+                    same2 << vector_join(lines2,"\n");
+                    same1 << "\n";
+                    same2 << "\n";
+
+                }
+                if (pairtype == "chim")
+                {
+                    chim1 << vector_join(lines1,"\n");
+                    chim2 << vector_join(lines2,"\n");
+                    chim1 << "\n";
+                    chim2 << "\n";
+                }
+            }
+            
+            // reset lines
+            i = 0;
+            lines1.clear();
+            lines2.clear();
+
+        }
+		
+        // output number of lines processed
+        if ( linecount % 1000000 == 0 )
+        {
+            cout << linecount;
+            cout << "\n";
+            
+        }
+	}
+	
+    // close streams
+    same1.close();
+    same2.close();
+    chim1.close();
+    chim2.close();
+    file1.close();
+    file2.close();
+     
+    // report results
+    std::vector< int > parsingresults;
+    parsingresults.push_back(samecount);
+    parsingresults.push_back(chimcount);
+    parsingresults.push_back(ambicount);
+
+    return parsingresults;								
 }
 
 // [[Rcpp::export]]
@@ -282,7 +489,130 @@ std::string NumberToString ( T Number )
 	return ss.str();
 }
 
-// Define a function that builds a bedpe file rom 2 sam file
+// Define a newer function that builds a bedpe from 2 BAM files
+// [[Rcpp::export]]
+void buildBedpe_fromBam(std::string bam1, std::string bam2, std::string bedpefile)
+{
+	// open BAM file for reading
+	BamTools::BamReader reader1;
+	BamTools::BamReader reader2;
+	
+	// setup the output file
+	ofstream bedpefilestream( bedpefile.c_str() );
+	
+	if( !reader1.Open(bam1) ) {
+		std::cerr << "Could not open BAM file 1." << std::endl;
+		return;
+	}
+	if( !reader2.Open(bam2)) {
+		std::cerr << "Could not open BAM file 2." << std::endl;
+	}
+	
+	// begin to iterate through BAM file
+	BamTools::BamAlignment aln1;
+	BamTools::BamAlignment aln2;
+	while( reader1.GetNextAlignmentCore(aln1) ) 
+	{
+		reader2.getNextAlignmentCore(aln2);
+		
+		if( !aln1.IsMapped() & !aln2.IsMapped()) {
+			continue;
+		}
+		
+		//Get various information read from file1
+		std::string name1 = aln1.name;
+		name1 = string_split(name1,"_")[0];
+		name1 = string_split(name1," ")[0];
+		name1 = string_split(name1,"#")[0];
+		int bitflag1 = aln1.AlignmentFlag;
+		std::string strand1 = get_strand(bitflag1);
+		std::string sequence1 = aln1.QueryBases;
+		std::string chrom1 = aln1.RefID;
+		int start1 = aln1.Position -1;
+		int stop1 = start1+aln1.Length;
+		
+		//Get various information from file2
+		std::string name2 = aln2.name;
+		name2 = string_split(name2,"_")[0];
+		name2 = string_split(name2," ")[0];
+		name2 = string_split(name2,"#")[0];
+		int bitflag1 = aln2.AlignmentFlag;
+		std::string strand2 = get_strand(bitflag2);
+		std::string sequence2 = aln2.QueryBases;
+		std::string chrom2 = aln2.RefID;
+		int start2 = aln2.Position -1;
+		int stop2 = start2+aln2.Length;
+		
+        // check that read names match
+        if (name1 != name2)
+        {
+            cout << "Error: read names of PET ends do not match";
+            break;
+        }
+		
+        // determine which read goes first
+        bool reorder = false;
+        if ((chrom1 == chrom2) & (start1 > start2) )
+        {
+            reorder = true;
+        }
+        if ((chrom1 != chrom2) & (chrom1 > chrom2) )
+        {
+            reorder = true;
+        }
+        if ((chrom1 != chrom2) & (chrom1 == "*") )
+        {
+            reorder = true;
+        }
+        if ((chrom1 != chrom2) & (chrom2 == "*") )
+        {
+            reorder = false;
+        }
+        
+        // print out results
+        if (reorder == false)
+        {
+            std::vector<std::string> outputvector;
+            outputvector.push_back(chrom1);
+            outputvector.push_back(IntToString(start1));
+            outputvector.push_back(IntToString(stop1));
+            outputvector.push_back(chrom2);
+            outputvector.push_back(IntToString(start2));
+            outputvector.push_back(IntToString(stop2));
+            outputvector.push_back(name1);
+            outputvector.push_back(".");
+            outputvector.push_back(strand1);
+            outputvector.push_back(strand2);
+            std::string outputstring = vector_join(outputvector,"\t");
+            bedpefilestream << outputstring;
+            bedpefilestream << "\n";
+        }
+        
+        if (reorder == true)
+        {
+            std::vector<std::string> outputvector;
+            outputvector.push_back(chrom2);
+            outputvector.push_back(IntToString(start2));
+            outputvector.push_back(IntToString(stop2));
+            outputvector.push_back(chrom1);
+            outputvector.push_back(IntToString(start1));
+            outputvector.push_back(IntToString(stop1));
+            outputvector.push_back(name1);
+            outputvector.push_back(".");
+            outputvector.push_back(strand2);
+            outputvector.push_back(strand1);
+            std::string outputstring = vector_join(outputvector,"\t");
+            bedpefilestream << outputstring;
+            bedpefilestream << "\n";
+        }
+		
+		bedpefilestream.close();
+		reader1.Close();
+		reader2.Close();
+	}
+}
+
+// Define a function that builds a bedpe file from 2 sam file
 // [[Rcpp::export]]
 void buildBedpe(std::string sam1, std::string sam2,std::string bedpefile)
 {
