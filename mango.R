@@ -8,6 +8,7 @@ suppressPackageStartupMessages(library("Rcpp"))
 suppressPackageStartupMessages(library("hash"))
 suppressPackageStartupMessages(library("mango"))
 suppressPackageStartupMessages(library("optparse"))
+suppressPackageStartupMessages(library("stringr"))
 
 print ("Starting mango ChIA PET analysis tool")
 Sys.time()
@@ -47,6 +48,7 @@ option_list <- list(
   
   make_option(c("--shortreads"),  default="TRUE",help="should bowtie alignments be done using paramter for very short reads (~20 bp)"),
   make_option(c("--downsample_rate"),  default="1.0",help="should bowtie alignments be done using paramter for very short reads (~20 bp)"),
+  make_option(c("--numThreads")), default=1,help="number of concurrent threads to use when aligning reads with bowtie"),
 
   #---------- STAGE 4 PARAMETERS ----------#
   
@@ -207,21 +209,40 @@ if (1 %in% opt$stages)
   linker1=as.character(opt["linkerA"])
   linker2=as.character(opt["linkerB"])
   
+  is.fastq.zipped <- any(str_detect(fastq1,c("\\.gz","\\.gzip")))
+  
   print ("finding linkers")
   
-  parsingresults = parseFastq( fastq1=fastq1,
-              fastq2=fastq2,
-              basename = basename,
-              minlength = minlength,
-              maxlength = maxlength, 
-              keepempty = keepempty,
-              linker1=linker1,
-              linker2=linker2)
+  if(is.fastq.zipped) {
+  	parsingresults = parseFastq_gzip(	fastq1=fastq1,
+              							fastq2=fastq2,
+              					  		basename = basename,
+              					  		minlength = minlength,
+              					  		maxlength = maxlength, 
+              					  		keepempty = keepempty,
+              					  		linker1=linker1,
+              					  		linker2=linker2)
+									
+    resultshash[["total PETs"]] = sum(parsingresults)
+    resultshash[["same PETs"]] = parsingresults[1]
+    resultshash[["chimeric PETs"]] = parsingresults[2]
+    resultshash[["ambigious PETs"]] = parsingresults[3]
   
-  resultshash[["total PETs"]] = sum(parsingresults)
-  resultshash[["same PETs"]] = parsingresults[1]
-  resultshash[["chimeric PETs"]] = parsingresults[2]
-  resultshash[["ambigious PETs"]] = parsingresults[3]
+  } else {
+	  	parsingresults = parseFastq(	fastq1=fastq1,
+	              						fastq2=fastq2,
+	              					  	basename = basename,
+	              					  	minlength = minlength,
+	              					  	maxlength = maxlength, 
+	              					  	keepempty = keepempty,
+	              					  	linker1=linker1,
+	              					  	linker2=linker2)
+										
+	    resultshash[["total PETs"]] = sum(parsingresults)
+	    resultshash[["same PETs"]] = parsingresults[1]
+	    resultshash[["chimeric PETs"]] = parsingresults[2]
+	    resultshash[["ambigious PETs"]] = parsingresults[3]
+	}
 }
   
 ###################################### align reads #####################################
@@ -234,8 +255,11 @@ if (2 %in% opt$stages)
   outname         = as.character(opt["outname"])
   bowtieref       = as.character(opt["bowtieref"])
   shortreads      = as.character(opt["shortreads"])
+  numThreads	  = as.character(opt["numThreads"])
+  
   
   print ("aligning reads")
+  
   # filenames
   fastq1 = paste(outname ,"_1.same.fastq",sep="")
   fastq2 = paste(outname ,"_2.same.fastq",sep="")
@@ -243,8 +267,8 @@ if (2 %in% opt$stages)
   sam2   = paste(outname ,"_2.same.sam",sep="")
   
   # align both ends of each PET
-  alignBowtie(fastq=fastq1,output=sam1,bowtiepath=bowtiepath,bowtieref=bowtieref,shortreads)
-  alignBowtie(fastq=fastq2,output=sam2,bowtiepath=bowtiepath,bowtieref=bowtieref,shortreads)
+  alignBowtie(fastq=fastq1,output=sam1,bowtiepath=bowtiepath,bowtieref=bowtieref,shortreads,num.threads=numThreads)
+  alignBowtie(fastq=fastq2,output=sam2,bowtiepath=bowtiepath,bowtieref=bowtieref,shortreads,num.threads=numThreads)
   
   # down sample the aligned files to keep the requested 
 }
