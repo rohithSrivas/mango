@@ -17,13 +17,13 @@ runAlign2RawSignal(input.bam,output.mat.file,temp.output.bedgraph.file,output.bw
 
   \item{path.to.align2rawsignal}{full path to the align2rawsingal binary file}
   
-  \item{bedtoolsgenome} {path to the bedtools genome file (name of contigs and the size of each contig)}
+  \item{bedtoolsgenome}{path to the bedtools genome file (name of contigs and the size of each contig)}
   
-  \item{fragLength} {the average fragment length estimated from phantompeakqual toolkit}
+  \item{fragLength}{the average fragment length estimated from phantompeakqual toolkit}
   
-  \item{chrDir} {path to directory containing individual chromsome fasta files}
+  \item{chrDir}{path to directory containing individual chromsome fasta files}
   
-  \item{mapDir} {path to directory containing mappability files}
+  \item{mapDir}{path to directory containing mappability files}
 }
 \description{
 This function produces signal track data in both MAT and BW formats using align2rawsignal

@@ -18,7 +18,7 @@ alignBowtie(fastq, output, bowtiepath, bowtieref, shortreads, num.threads=1, ver
   \item{nlines}{the number of lines to look at to determine
   the scoring method}
   
-  \item{num.threads} {The number of parallel search threads to use for alignment}
+  \item{num.threads}{The number of parallel search threads to use for alignment}
 }
 \description{
 This function aligns reads using bowtie

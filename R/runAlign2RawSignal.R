@@ -29,15 +29,15 @@ runAlign2RawSignal <- function(	input.bam,
 	# setup environmental path variables command
   	env.command <- paste(	"MCRROOT=",path.to.mcr,"\n",
   							"LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${MCRROOT}/runtime/glnxa64\n",
-  							"LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${MCRROOT}/bin/glnxa64\n"
-							"LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${MCRROOT}/sys/os/glnxa64\n"
-							"MCRJRE=${MCRROOT}/sys/java/jre/glnxa64/jre/lib/amd64\n"
-							"LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${MCRJRE}/native_threads\n"
-							"LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${MCRJRE}/server\n"
-							"LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${MCRJRE}\n"
-							"XAPPLRESDIR=${MCRROOT}/X11/app-defaults\n"
-							"export LD_LIBRARY_PATH\n"
-							"export XAPPLRESDIR\n"
+  							"LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${MCRROOT}/bin/glnxa64\n",
+							"LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${MCRROOT}/sys/os/glnxa64\n",
+							"MCRJRE=${MCRROOT}/sys/java/jre/glnxa64/jre/lib/amd64\n",
+							"LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${MCRJRE}/native_threads\n",
+							"LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${MCRJRE}/server\n",
+							"LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${MCRJRE}\n",
+							"XAPPLRESDIR=${MCRROOT}/X11/app-defaults\n",
+							"export LD_LIBRARY_PATH\n",
+							"export XAPPLRESDIR\n",
 							"export MCR_CACHE_ROOT=",tempdir(),"\n",sep="")
 	system(env.command)
 	

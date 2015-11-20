@@ -20,6 +20,7 @@ using namespace Rcpp;
 #include "boost/iostreams/filter/gzip.hpp"
 #include "mergesort.h"
 #include "api/BamReader.h"
+#include "api/BamMultiReader.h"
 #include "api/BamWriter.h"
 using namespace std;
 
@@ -537,7 +538,7 @@ void downSampleBam(std::string inputBam1, std::string inputBam2, std::string out
 	BamTools::BamAlignment al2;
 	while( reader1.GetNextAlignmentCore(al1))
 	{
-		reader2.GetNextAlignmentCore(al2)
+		reader2.GetNextAlignmentCore(al2);
 		double number = distribution(generator);
 		if(number<sampleRate) {
 			writer1.SaveAlignment(al1);
@@ -571,7 +572,7 @@ void mergeTwoBam(std::string inputBam1, std::string inputBam2, std::string outpu
 	
 	BamTools::BamWriter writer;
 	if(!writer.Open(outputBam,header,references)) {
-		std::cerr < "Could not open output BAM file!" << endl;
+		std::cerr << "Could not open output BAM file!" << endl;
 		return;
 	}
 	
