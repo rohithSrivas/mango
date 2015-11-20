@@ -1,7 +1,7 @@
 # runs mango chia pet analysis pipeline
 
 # Version info
-Mangoversion = "1.0.5"
+Mangoversion = "2.0"
 
 # Load Packages
 suppressPackageStartupMessages(library("Rcpp"))
@@ -9,10 +9,13 @@ suppressPackageStartupMessages(library("hash"))
 suppressPackageStartupMessages(library("mango"))
 suppressPackageStartupMessages(library("optparse"))
 suppressPackageStartupMessages(library("stringr"))
+suppressPackageStartupMessages(library("caTools"))
+suppressPackageStartupMessages(library("spp"))
+suppressPackageStartupMessages(library("snow"))
 
 print ("Starting mango ChIA PET analysis tool")
 Sys.time()
-set.seed(1)
+set.seed(123)
 
 ##################################### read commandline paramters #####################################
 
@@ -32,6 +35,8 @@ option_list <- list(
   make_option(c("--bedtoolspath"),  default="NULL",help="full path to bedtools"),
   make_option(c("--macs2path"),  default="NULL",help="full path to macs2path"),
   make_option(c("--bowtiepath"),  default="NULL",help="full path to bowtiepath"),
+  make_option(c("--samtoolspath"),  default="NULL",help="full path to samtools"),
+  make_option(c("--ucsctoolspath"), default="NULL",help="full path to ucsc tools"),
   make_option(c("--verboseoutput"),  default="FALSE",help="if true output file will have more columns as well as a header row describing the columns"),
   
   #---------- STAGE 1 PARAMETERS ----------#
@@ -70,7 +75,15 @@ option_list <- list(
   make_option(c("--extendreads"),  default="120",help="how many bp to extend reads towards peak"),
   make_option(c("--minPETS"),  default="2",help="minimum number of PETs required for an interaction (applied after FDR filtering)"),
   make_option(c("--reportallpairs"),  default="FALSE",help="Should all pairs be reported or just significant pairs"),
-  make_option(c("--MHT"),  default="all",help="How should mutliple hypothsesis testing be done?  Correct for 'all' possible pairs of loci or only those 'found' with at least 1 PET")  
+  make_option(c("--MHT"),  default="all",help="How should mutliple hypothsesis testing be done?  Correct for 'all' possible pairs of loci or only those 'found' with at least 1 PET"),
+  
+  #---------- STAGE 6 PARAMETERS ----------#
+  
+  make_option(c("--mcrPath"),	default="NULL",help="full path to MCR v17 installed toolkit"), 
+  make_option(c("--align2rawsignalpath"),	default="NULL",help="full path to align2rawsignal program"),
+  make_option(c("--chrfastaDir"),	default="NULL",help="path to directory containing individual chromosome fasta files"),
+  make_option(c("--mappabilityDir"),	default="NULL",help="path to directory containing mappability tracks"),
+  make_option(c("--sppScriptFile"),	default="NULL",help="location of phantompeakqual tools R script")
 )
 
 # get command line options, if help option encountered print help and exit,
@@ -80,11 +93,13 @@ opt <- parse_args(OptionParser(option_list=option_list))
 # check dependencies
 
 # first look in PATH
-progs = c("bedtools","macs2","bowtie")
+progs = c("bedtools","macs2","bowtie","samtools","ucsc_tools")
 Paths = DefinePaths(progs = progs)
 bedtoolspath  = Paths[1]
 macs2path     = Paths[2]
 bowtiepath    = Paths[3]
+samtoolspath  = Paths[4]
+ucsctoolspath = Paths[5]
 
 
 # next, look in arguments
@@ -100,14 +115,24 @@ if (opt["bowtiepath"] != "NULL")
 {
   bowtiepath = opt["bowtiepath"]
 }
+if( opt["samtoolspath"] != "NULL")
+{
+	samtoolspath = opt["samtoolspath"]
+}
+if( opt["ucsctoolspath"] != "NULL")
+{
+	ucsctoolspath = opt["ucsctoolspath"]
+}
 
 # get software versions
-bedtoolsversion = system(paste(bedtoolspath,"--version"),intern=TRUE)[1]
-macs2version    = system(paste(macs2path,"--version 2>&1"),intern=TRUE)[1]
-bowtieversion   = system(paste(bowtiepath,"--version"),intern=TRUE)[1]
+bedtoolsversion  = system(paste(bedtoolspath,"--version"),intern=TRUE)[1]
+macs2version     = system(paste(macs2path,"--version 2>&1"),intern=TRUE)[1]
+bowtieversion    = system(paste(bowtiepath,"--version"),intern=TRUE)[1]
+samtoolsversion  = system(paste(samtoolspath,"--version"),intern=TRUE)[1]
+ucsctoolsversion = system(paste(ucsctoolspath,"--version"),intern=TRUE)[1]
 
 # break if dependencies not found
-Paths = c(bedtoolspath,macs2path,bowtiepath)
+Paths = c(bedtoolspath,macs2path,bowtiepath,samtoolspath,ucsctoolspath)
 i = 0
 pathsOK = T
 for (p in Paths)
@@ -209,10 +234,12 @@ if (1 %in% opt$stages)
   linker1=as.character(opt["linkerA"])
   linker2=as.character(opt["linkerB"])
   
+  #Check if the FASTQ files are zipped
   is.fastq.zipped <- any(str_detect(fastq1,c("\\.gz","\\.gzip")))
   
   print ("finding linkers")
   
+  #If zipped, no need to unzip, just process it
   if(is.fastq.zipped) {
   	parsingresults = parseFastq_gzip(	fastq1=fastq1,
               							fastq2=fastq2,
@@ -263,14 +290,23 @@ if (2 %in% opt$stages)
   # filenames
   fastq1 = paste(outname ,"_1.same.fastq",sep="")
   fastq2 = paste(outname ,"_2.same.fastq",sep="")
-  sam1   = paste(outname ,"_1.same.sam",sep="")
-  sam2   = paste(outname ,"_2.same.sam",sep="")
+  bam1   = paste(outname ,"_1.same.bam",sep="")
+  bam2   = paste(outname ,"_2.same.bam",sep="")
   
   # align both ends of each PET
-  alignBowtie(fastq=fastq1,output=sam1,bowtiepath=bowtiepath,bowtieref=bowtieref,shortreads,num.threads=numThreads)
-  alignBowtie(fastq=fastq2,output=sam2,bowtiepath=bowtiepath,bowtieref=bowtieref,shortreads,num.threads=numThreads)
+  alignBowtie(fastq=fastq1,output=bam1,bowtiepath=bowtiepath,bowtieref=bowtieref,samtoolspath=samtoolspath,shortreads,num.threads=numThreads)
+  alignBowtie(fastq=fastq2,output=bam2,bowtiepath=bowtiepath,bowtieref=bowtieref,samtoolspath=samtoolspath,shortreads,num.threads=numThreads)
   
-  # down sample the aligned files to keep the requested 
+  # down sample the aligned files to keep the requested
+  downSample     = as.numeric(opt["downsample_rate"])
+  if(downSample < 1.0) 
+  {
+	  print ("performing downsampling")
+	  bam1.ds   = paste(outname ,"_1.same_downSampled_",downSample,".bam",sep="")
+	  bam2.ds   = paste(outname ,"_2.same_downSampled_.",downSample,"bam",sep="")
+	  
+	  downSampleBam(bam1,bam2,bam1.ds,bam2.ds,downSample)
+  }
 }
 
 ##################################### filter reads #####################################
@@ -281,18 +317,19 @@ if (3 %in% opt$stages)
   
   # gather arguments
   outname         =  as.character(opt["outname"])
+  downSample      = as.numeric(opt["downsample_rate"])
   
   # filenames
   bedpefile          = paste(outname ,".bedpe",sep="")
   bedpefilesort      = paste(outname ,".sort.bedpe",sep="")
   bedpefilesortrmdup = paste(outname ,".sort.rmdup.bedpe",sep="")
-  sam1 = paste(outname ,"_1.same.sam",sep="")
-  sam2 = paste(outname ,"_2.same.sam",sep="")
+  bam1 = ifelse(downSample<1.0,paste(outname ,"_1.same_downSampled_",downSample,".bam",sep=""),paste(outname ,"_1.same.bam",sep=""))
+  bam2 = ifelse(downSample<1.0,paste(outname ,"_2.same_downSampled_",downSample,".bam",sep=""),paste(outname ,"_2.same.bam",sep=""))
   
   # build bedpe
   print ("building bedpe")
   if (file.exists(bedpefile)){file.remove(bedpefile)}
-  buildBedpe(sam1 =sam1, sam2 = sam2, bedpefile = bedpefile);
+  buildBedpefromBam(bam1 =bam1, bam2 = bam2, bedpefile = bedpefile);
   
   # split by chromosome and position
   print ("removing duplicate PETs")
@@ -712,6 +749,68 @@ if (5 %in% opt$stages)
     if (file.exists(bedfile)) file.remove(bedfile)
     if (file.exists(overlapfile)) file.remove(overlapfile)
   }
+}
+
+############################### assess chip quality and produce signal track data ###############################
+
+if (6 %in% opt$stages)
+{
+	checkRequired(opt,c("align2rawsignalpath"))
+	checkRequired(opt,c("chrfastaDir"))
+	checkRequired(opt,c("mappabilityDir"))
+	checkRequired(opt,c("sppScriptFile"))
+	checkRequired(opt,c("mcrPath"))
+	checkRequired(opt,c("bedtoolsgenome"))
+	
+	# gather arguments
+	outname					= as.character(opt["outname"])
+	align2rawsignalpath 	= as.character(opt["align2rawsignalpath"])
+	chrfastaDir				= as.character(opt["chrfastaDir"])
+	mappabilityDir			= as.character(opt["mappabilityDir"])
+	sppScriptFile			= as.character(opt["sppScriptFile"])
+	numThreads				= as.numeric(opt["numThreads"])
+	downSample      		= as.numeric(opt["downsample_rate"])
+	mcrPath					= as.character(opt["mcrPath"])
+	bedtoolsgenome			= as.character(opt["bedtoolsgenome"])
+	
+	print ("assessing chip quality and producing signal track data")
+	
+	# generate file names
+    bam1 = ifelse(downSample<1.0,paste(outname ,"_1.same_downSampled_",downSample,".bam",sep=""),paste(outname ,"_1.same.bam",sep=""))
+    bam2 = ifelse(downSample<1.0,paste(outname ,"_2.same_downSampled_",downSample,".bam",sep=""),paste(outname ,"_2.same.bam",sep=""))
+	temp.merged.bam = paste(outname,"_tempMerged.bam",sep="") 
+	mat.file = paste(outname,"_signalTrack_MAT.mat",sep="")
+	temp.bedgraph = paste(outname,"_temp.bedGraph",sep="")
+	bw.file = paste(outname,"_signalTrack.bw",sep="")
+	qual.results.file = paste(outname,"_chipQual_results.txt",sep="")
+	qual.results.plot.file = paste(outname,"_chipQual_plot.pdf",sep="")
+	
+	# merge bam files temporarily
+	mergeTwoBam(bam1,bam2,temp.merged.bam)
+	
+	#Run the phantom peakquality tools and acquire estimated fragment length
+	run.phantom(	input.bam=temp.merged.bam,
+					output.results.file=qual.results.file,
+					output.plot.file=qual.results.plot.file,
+					path.to.phantom.script=sppScriptFile,
+					num.threads=numThreads)
+	
+	# extract the expected fragment length
+	phantom.dat <- read.table(qual.results.file,sep="\t")
+	frag.length <- unlist(strsplit(as.character(phantom.dat),","))[1]
+	
+	# run the align2rawsignal 
+	run.signal(	input.bam=temp.merged.bam,
+				output.mat.file=mat.file,
+				temp.output.bedgraph.file=temp.bedgraph,
+				output.bw.file=bw.file,
+				path.to.mcr=mcrPath,
+				path.to.align2rawsignal=align2rawsignalpath,
+				bedtoolsgenome=bedtoolsgenome,
+				fragLength=frag.length,
+				chrDir=chrfastaDir,
+				mapDir=mappabilityDir)
+					
 } 
 
 ##################################### Make Log file #####################################
@@ -727,6 +826,8 @@ write(paste("mango version",":",Mangoversion),file=logfile,append=TRUE)
 write(paste("bedtools version",":",bedtoolsversion),file=logfile,append=TRUE)
 write(paste("macs2 version",":",macs2version),file=logfile,append=TRUE)
 write(paste("bowtie version",":",bowtieversion),file=logfile,append=TRUE)
+write(paste("samtools version",":",samtoolsversion),file=logfile,append=TRUE)
+write(paste("ucsc genome tools version",":",ucsctoolsversion),file=logfile,append=TRUE)
 
 write("",file=logfile,append=TRUE)
 write("Analyzed by Mango using the following parameters:",file=logfile,append=TRUE)
