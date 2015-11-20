@@ -14,16 +14,16 @@
 #' @param mapDir path to directory containing mappability files
 #' @export
 #' 
-run.signal <- function(	input.bam,
-						output.mat.file,
-						temp.output.bedgraph.file,
-						output.bw.file,
-						path.to.mcr,
-						path.to.align2rawsignal,
-						bedtoolsgenome,
-						fragLength,
-						chrDir,
-						mapDir)
+runAlign2RawSignal <- function(	input.bam,
+								output.mat.file,
+								temp.output.bedgraph.file,
+								output.bw.file,
+								path.to.mcr,
+								path.to.align2rawsignal,
+								bedtoolsgenome,
+								fragLength,
+								chrDir,
+								mapDir)
 {
 	
 	# setup environmental path variables command

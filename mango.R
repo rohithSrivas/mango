@@ -789,27 +789,27 @@ if (6 %in% opt$stages)
 	mergeTwoBam(bam1,bam2,temp.merged.bam)
 	
 	#Run the phantom peakquality tools and acquire estimated fragment length
-	run.phantom(	input.bam=temp.merged.bam,
-					output.results.file=qual.results.file,
-					output.plot.file=qual.results.plot.file,
-					path.to.phantom.script=sppScriptFile,
-					num.threads=numThreads)
+	runPhantomPeakQual(	input.bam=temp.merged.bam,
+						output.results.file=qual.results.file,
+						output.plot.file=qual.results.plot.file,
+						path.to.phantom.script=sppScriptFile,
+						num.threads=numThreads)
 	
 	# extract the expected fragment length
 	phantom.dat <- read.table(qual.results.file,sep="\t")
 	frag.length <- unlist(strsplit(as.character(phantom.dat),","))[1]
 	
 	# run the align2rawsignal 
-	run.signal(	input.bam=temp.merged.bam,
-				output.mat.file=mat.file,
-				temp.output.bedgraph.file=temp.bedgraph,
-				output.bw.file=bw.file,
-				path.to.mcr=mcrPath,
-				path.to.align2rawsignal=align2rawsignalpath,
-				bedtoolsgenome=bedtoolsgenome,
-				fragLength=frag.length,
-				chrDir=chrfastaDir,
-				mapDir=mappabilityDir)
+	runAlign2RawSignal(	input.bam=temp.merged.bam,
+						output.mat.file=mat.file,
+						temp.output.bedgraph.file=temp.bedgraph,
+						output.bw.file=bw.file,
+						path.to.mcr=mcrPath,
+						path.to.align2rawsignal=align2rawsignalpath,
+						bedtoolsgenome=bedtoolsgenome,
+						fragLength=frag.length,
+						chrDir=chrfastaDir,
+						mapDir=mappabilityDir)
 					
 } 
 

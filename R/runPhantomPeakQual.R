@@ -9,11 +9,11 @@
 #' @param num.threads Number of parallel threads to utilize for computing strand cross-correlation
 #' @export
 #' 
-run.phantom <- function(	input.bam,
-							output.results.file,
-							output.plot.file,
-							path.to.phantom.script,
-                        	num.threads=1)
+runPhantomPeakQual <- function(	input.bam,
+								output.results.file,
+								output.plot.file,
+								path.to.phantom.script,
+                        		num.threads=1)
 {
   
   # setup command
