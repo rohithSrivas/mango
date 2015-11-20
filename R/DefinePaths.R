@@ -1,6 +1,6 @@
 
 # Define a function that determines paths to requires programs
-DefinePaths <- function(progs = c("bedtools","MACS2","bowtie"))
+DefinePaths <- function(progs = c("bedtools","MACS2","bowtie","samtools","ucsc_tools"))
 {
   syspath = strsplit( Sys.getenv(c("PATH")),split=":")[[1]]
   progpaths = c()
