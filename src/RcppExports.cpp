@@ -29,6 +29,25 @@ BEGIN_RCPP
     return __result;
 END_RCPP
 }
+// parseFastq_gzip
+std::vector< int > parseFastq_gzip(std::string fastq1, std::string fastq2, std::string basename, int minlength, int maxlength, bool keepempty, bool verbose, std::string linker1, std::string linker2);
+RcppExport SEXP mango_parseFastq_gzip(SEXP fastq1SEXP, SEXP fastq2SEXP, SEXP basenameSEXP, SEXP minlengthSEXP, SEXP maxlengthSEXP, SEXP keepemptySEXP, SEXP verboseSEXP, SEXP linker1SEXP, SEXP linker2SEXP) {
+BEGIN_RCPP
+    Rcpp::RObject __result;
+    Rcpp::RNGScope __rngScope;
+    Rcpp::traits::input_parameter< std::string >::type fastq1(fastq1SEXP);
+    Rcpp::traits::input_parameter< std::string >::type fastq2(fastq2SEXP);
+    Rcpp::traits::input_parameter< std::string >::type basename(basenameSEXP);
+    Rcpp::traits::input_parameter< int >::type minlength(minlengthSEXP);
+    Rcpp::traits::input_parameter< int >::type maxlength(maxlengthSEXP);
+    Rcpp::traits::input_parameter< bool >::type keepempty(keepemptySEXP);
+    Rcpp::traits::input_parameter< bool >::type verbose(verboseSEXP);
+    Rcpp::traits::input_parameter< std::string >::type linker1(linker1SEXP);
+    Rcpp::traits::input_parameter< std::string >::type linker2(linker2SEXP);
+    __result = Rcpp::wrap(parseFastq_gzip(fastq1, fastq2, basename, minlength, maxlength, keepempty, verbose, linker1, linker2));
+    return __result;
+END_RCPP
+}
 // parseFastq
 std::vector< int > parseFastq(std::string fastq1, std::string fastq2, std::string basename, int minlength, int maxlength, bool keepempty, bool verbose, std::string linker1, std::string linker2);
 RcppExport SEXP mango_parseFastq(SEXP fastq1SEXP, SEXP fastq2SEXP, SEXP basenameSEXP, SEXP minlengthSEXP, SEXP maxlengthSEXP, SEXP keepemptySEXP, SEXP verboseSEXP, SEXP linker1SEXP, SEXP linker2SEXP) {
@@ -48,6 +67,31 @@ BEGIN_RCPP
     return __result;
 END_RCPP
 }
+void downSampleBam(std::string inputBam1, std::string inputBam2, std::string outputBam1, std::string outputBam2, double sampleRate);
+RcppExport SEXP mango_downSampleBam(SEXP inputBam1SEXP, SEXP inputBam2SEXP, SEXP outputBam1SEXP, SEXP outputBam2SEXP, SEXP sampleRateSEXP) {
+BEGIN_RCPP
+	Rcpp::RNGScope __rngScope;
+	Rcpp::traits::input_parameter< std::string >::type inputBam1(inputBam1SEXP);
+	Rcpp::traits::input_parameter< std::string >::type inputBam2(inputBam2SEXP);
+	Rcpp::traits::input_parameter< std::string >::type outputBam1(outputBam1SEXP);
+	Rcpp::traits::input_parameter< std::string >::type outputBam2(outputBam2SEXP);
+	Rcpp::traits::input_parameter< double >::type sampleRate(sampleRateSEXP);
+	downSampleBam(inputBam1, inputBam2, outputBam1, outputBam2, sampleRate);
+	return R_NilValue;
+END_RCPP
+}
+// mergeTwoBam
+void mergeTwoBam(std::string inputBam1, std::string inputBam2, std::string outputBam);
+RcppExport SEXP mango_mergeTwoBam(SEXP inputBam1SEXP, SEXP inputBam2SEXP, SEXP outputBamSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope __rngScope;
+    Rcpp::traits::input_parameter< std::string >::type inputBam1(inputBam1SEXP);
+    Rcpp::traits::input_parameter< std::string >::type inputBam2(inputBam2SEXP);
+    Rcpp::traits::input_parameter< std::string >::type outputBam(outputBamSEXP);
+    mergeTwoBam(inputBam1, inputBam2, outputBam);
+    return R_NilValue;
+END_RCPP
+}
 // buildBedpe
 void buildBedpe(std::string sam1, std::string sam2, std::string bedpefile);
 RcppExport SEXP mango_buildBedpe(SEXP sam1SEXP, SEXP sam2SEXP, SEXP bedpefileSEXP) {
@@ -57,6 +101,18 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< std::string >::type sam2(sam2SEXP);
     Rcpp::traits::input_parameter< std::string >::type bedpefile(bedpefileSEXP);
     buildBedpe(sam1, sam2, bedpefile);
+    return R_NilValue;
+END_RCPP
+}
+// buildBedpefromBam
+void buildBedpefromBam(std::string bam1, std::string bam2, std::string bedpefile);
+RcppExport SEXP mango_buildBedpefromBam(SEXP bam1SEXP, SEXP bam2SEXP, SEXP bedpefileSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope __rngScope;
+    Rcpp::traits::input_parameter< std::string >::type bam1(bam1SEXP);
+    Rcpp::traits::input_parameter< std::string >::type bam2(bam2SEXP);
+    Rcpp::traits::input_parameter< std::string >::type bedpefile(bedpefileSEXP);
+    buildBedpefromBam(bam1, bam2, bedpefile);
     return R_NilValue;
 END_RCPP
 }

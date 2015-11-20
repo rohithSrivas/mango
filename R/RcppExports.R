@@ -13,8 +13,24 @@ parseFastq <- function(fastq1, fastq2, basename, minlength = 15L, maxlength = 25
     .Call('mango_parseFastq', PACKAGE = 'mango', fastq1, fastq2, basename, minlength, maxlength, keepempty, verbose, linker1, linker2)
 }
 
+parseFastq_gzip <- function(fastq1, fastq2, basename, minlength = 15L, maxlength = 25L, keepempty = FALSE, verbose = TRUE, linker1 = "GTTGGATAAG", linker2 = "GTTGGAATGT") {
+    .Call('mango_parseFastq_gzip', PACKAGE = 'mango', fastq1, fastq2, basename, minlength, maxlength, keepempty, verbose, linker1, linker2)
+}
+
 buildBedpe <- function(sam1, sam2, bedpefile) {
     invisible(.Call('mango_buildBedpe', PACKAGE = 'mango', sam1, sam2, bedpefile))
+}
+
+buildBedpefromBam <- function(bam1, bam2, bedpefile) {
+    invisible(.Call('mango_buildBedpefromBam', PACKAGE = 'mango', bam1, bam2, bedpefile))
+}
+
+mergeTwoBam <- function(inputBam1, inputBam2, outputBam) {
+	invisible(.Call('mango_mergeTwoBam', PACKAGE = 'mango', inputBam1, inputBam2, outputBam))
+}
+
+downSampleBam <- function(inputBam1, inputBam2, outputBam1, outputBam2, sampleRate) {
+	invisible(.Call('mango_downSampleBam', PACKAGE = 'mango', inputBam1, inputBam2, outputBam1, outputBam2, sampleRate))
 }
 
 findPairs <- function(overlapfile, petpairsfile, interactionfile, peakscount, peaksfileslopdepth) {

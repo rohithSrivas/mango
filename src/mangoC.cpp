@@ -14,9 +14,10 @@ using namespace Rcpp;
 #include <sstream>
 #include <bitset>
 #include <map>
-#include <boost/iostreams/filtering_streambuf.hpp>
-#include <boost/iostreams/copy.hpp>
-#include <boost/iostreams/filter/gzip.hpp>
+#include <random>
+#include "boost/iostreams/filtering_streambuf.hpp"
+#include "boost/iostreams/copy.hpp"
+#include "boost/iostreams/filter/gzip.hpp"
 #include "mergesort.h"
 #include "api/BamReader.h"
 #include "api/BamWriter.h"
@@ -53,7 +54,7 @@ std::vector<std::string> string_split( const std::string& s, const std::string& 
 
 //	Define a new function for parsing a FASTQ which does not require it to be unzipped
 // [[Rcpp::export]]
-std::vector< int > parseFastq_gzip(	std::string fastq1, std::fastq2, std::string basename,
+std::vector< int > parseFastq_gzip(	std::string fastq1, std::string fastq2, std::string basename,
 									int minlength = 15, int maxlength = 25,
 									bool keepempty = false, bool verbose = true,
 									std::string linker1 = "GTTGGATAAG", std::string linker2 = "GTTGGAATGT")
@@ -489,10 +490,105 @@ std::string NumberToString ( T Number )
 	return ss.str();
 }
 
+// Define a function for downsampling a given BAM file
+// [][Rcpp::export]]
+void downSampleBam(std::string inputBam1, std::string inputBam2, std::string outputBam1, std::string outputBam2, double sampleRate)
+{
+	// open BAM file for reading
+	BamTools::BamReader reader1;
+	BamTools::BamReader reader2;
+	
+	// open BAM file for writing
+	BamTools::BamWriter writer1;
+	BamTools::BamWriter writer2;
+	
+	// attempt to open and close things
+	if (!reader1.Open(inputBam1))
+	{
+		std::cerr << "Could not open input BAM file 1 for downsampling." << endl;
+		return;
+	}
+	if (!reader2.Open(inputBam2))
+	{
+		std::cerr << "Could not open input BAM file 2 for downsampling." << endl;
+		return;
+	}
+	
+	const BamTools::SamHeader header1 = reader1.GetHeader();
+	const BamTools::RefVector references1 = reader1.GetReferenceData();
+	const BamTools::SamHeader header2 = reader2.GetHeader();
+	const BamTools::RefVector references2 = reader2.GetReferenceData();
+	
+	if(!writer1.Open(outputBam1,header1,references1))
+	{
+		std::cerr << "Could not open output BAM file" << endl;
+		return;
+	}
+	if(!writer2.Open(outputBam2,header2,references2))
+	{
+		std::cerr << "Could not open output BAM file" << endl;
+		return;
+	}
+	
+	// iterate and down sample randomly
+	std::default_random_engine generator;
+	std::uniform_real_distribution<double> distribution(0.0,1.0);
+	BamTools::BamAlignment al1;
+	BamTools::BamAlignment al2;
+	while( reader1.GetNextAlignmentCore(al1))
+	{
+		reader2.GetNextAlignmentCore(al2)
+		double number = distribution(generator);
+		if(number<sampleRate) {
+			writer1.SaveAlignment(al1);
+			writer2.SaveAlignment(al2);
+		}
+	}
+	
+	// close all streams
+	reader1.Close();
+	reader2.Close();
+	writer1.Close();
+	writer2.Close();
+}
+
+// Define a function for merging two BAM files
+// [[Rcpp::export]]
+void mergeTwoBam(std::string inputBam1, std::string inputBam2, std::string outputBam)
+{
+	std::vector<std::string> inputFileNames;
+	inputFileNames.push_back(inputBam1);
+	inputFileNames.push_back(inputBam2);
+	
+	BamTools::BamMultiReader reader;
+	if(!reader.Open(inputFileNames)) {
+		std::cerr << "Could not open input BAM files!" << endl;
+		return;
+	}
+	
+	const BamTools::SamHeader header = reader.GetHeader();
+	const BamTools::RefVector references = reader.GetReferenceData();
+	
+	BamTools::BamWriter writer;
+	if(!writer.Open(outputBam,header,references)) {
+		std::cerr < "Could not open output BAM file!" << endl;
+		return;
+	}
+	
+	BamTools::BamAlignment al;
+	while( reader.GetNextAlignmentCore(al)) {
+		writer.SaveAlignment(al);
+	}
+	
+	reader.Close();
+	writer.Close();
+}
+
+
 // Define a newer function that builds a bedpe from 2 BAM files
 // [[Rcpp::export]]
-void buildBedpe_fromBam(std::string bam1, std::string bam2, std::string bedpefile)
-{
+void buildBedpefromBam(std::string bam1, std::string bam2, std::string bedpefile)
+{	
 	// open BAM file for reading
 	BamTools::BamReader reader1;
 	BamTools::BamReader reader2;
@@ -508,39 +604,56 @@ void buildBedpe_fromBam(std::string bam1, std::string bam2, std::string bedpefil
 		std::cerr << "Could not open BAM file 2." << std::endl;
 	}
 	
+	// get reference information about each bam file
+	const BamTools::RefVector refFile1 = reader1.GetReferenceData();
+	const BamTools::RefVector refFile2 = reader2.GetReferenceData();
+	
 	// begin to iterate through BAM file
 	BamTools::BamAlignment aln1;
 	BamTools::BamAlignment aln2;
-	while( reader1.GetNextAlignmentCore(aln1) ) 
+	while( reader1.GetNextAlignment(aln1) ) 
 	{
-		reader2.getNextAlignmentCore(aln2);
+		reader2.GetNextAlignment(aln2);
 		
 		if( !aln1.IsMapped() & !aln2.IsMapped()) {
 			continue;
 		}
 		
 		//Get various information read from file1
-		std::string name1 = aln1.name;
+		std::string name1 = aln1.Name;
 		name1 = string_split(name1,"_")[0];
 		name1 = string_split(name1," ")[0];
 		name1 = string_split(name1,"#")[0];
 		int bitflag1 = aln1.AlignmentFlag;
 		std::string strand1 = get_strand(bitflag1);
 		std::string sequence1 = aln1.QueryBases;
-		std::string chrom1 = aln1.RefID;
-		int start1 = aln1.Position -1;
+		
+		std::string chrom1;
+		if( aln1.IsMapped()) {
+			chrom1 = refFile1[aln1.RefID].RefName;
+		}
+		else {
+			chrom1 = "*";
+		}
+		int start1 = aln1.Position;
 		int stop1 = start1+aln1.Length;
 		
 		//Get various information from file2
-		std::string name2 = aln2.name;
+		std::string name2 = aln2.Name;
 		name2 = string_split(name2,"_")[0];
 		name2 = string_split(name2," ")[0];
 		name2 = string_split(name2,"#")[0];
-		int bitflag1 = aln2.AlignmentFlag;
+		int bitflag2 = aln2.AlignmentFlag;
 		std::string strand2 = get_strand(bitflag2);
 		std::string sequence2 = aln2.QueryBases;
-		std::string chrom2 = aln2.RefID;
-		int start2 = aln2.Position -1;
+		std::string chrom2;
+		if( aln2.IsMapped()) {
+			chrom2 = refFile2[aln2.RefID].RefName;
+		}
+		else {
+			chrom2 = "*";
+		}
+		int start2 = aln2.Position;
 		int stop2 = start2+aln2.Length;
 		
         // check that read names match
@@ -605,11 +718,11 @@ void buildBedpe_fromBam(std::string bam1, std::string bam2, std::string bedpefil
             bedpefilestream << outputstring;
             bedpefilestream << "\n";
         }
-		
-		bedpefilestream.close();
-		reader1.Close();
-		reader2.Close();
 	}
+	
+	bedpefilestream.close();
+	reader1.Close();
+	reader2.Close();
 }
 
 // Define a function that builds a bedpe file from 2 sam file
