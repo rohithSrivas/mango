@@ -1,5 +1,5 @@
-\name{runAlign2RawSignal}
-\alias{runAlign2RawSignal}
+\name{runPhantomPeakQual}
+\alias{runPhantomPeakQual}
 \title{Assess ChIP quality using phantompeakquals toolkit}
 \usage{
 runPhantomPeakQual(input.bam,output.results.file,output.plot.file,path.to.phantom.script,num.threads=1)

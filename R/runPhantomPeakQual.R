@@ -1,4 +1,4 @@
-#' aligns reads using bowtie
+#' Runs the phantompeakqual tool kit on a BAM file
 #'
 #' This function assesses ChIP quality using the phantompeakquals toolkit
 #'  
