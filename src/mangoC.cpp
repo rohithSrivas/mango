@@ -1177,12 +1177,6 @@ void findPairs(std::string overlapfile, std::string petpairsfile,std::string int
 }
 
 
-
-
-
-
-
-
 // Define a function splits bed file by chromosome
 // [[Rcpp::export]]
 std::vector<std::string> splitBedbyChrom(std::string bedfile,std::string outnamebase)
@@ -1350,9 +1344,6 @@ void DeterminePeakDepthsC(std::string temppeakoverlap,std::string peaksfileslopd
   fileOUT.close();
 
 }
-
-
-
 
 
 // Define a function removes duplicates from a bedpe file
@@ -1605,6 +1596,7 @@ std::vector<std::string> splitBedpe(std::string bedpein,std::string outnamebase,
     return ReadAndPETchroms;
 }
 
+
 // [[Rcpp::export]]
 void buildTagAlign(std::string bedpefile, std::string TagAlignfile) {
     
@@ -1672,6 +1664,7 @@ void buildTagAlign(std::string bedpefile, std::string TagAlignfile) {
     outfile.close();
 }
 
+
 // Define a function to do an external sort
 // [[Rcpp::export]]
 void external_sort( std::string inputfile, std::string outputfile ){
@@ -1711,7 +1704,6 @@ void everyotherline(std::string overlapin, std::string overlapout) {
 }
 
 
-
 // Define a function that adds Q values and filters results
 // [[Rcpp::export]]
 void AddQvals(std::string interactionfile, std::string interactionfilefinal,std::vector<double> Q,double maxPval )
@@ -1748,7 +1740,3 @@ void AddQvals(std::string interactionfile, std::string interactionfilefinal,std:
     outfile.close();
   
 }
-
-
-
-

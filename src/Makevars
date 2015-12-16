@@ -1,0 +1,2 @@
+PKG_CXXFLAGS = -I/Users/rsrivas/Desktop/seq_utils/bamtools/include/ -I/opt/local/include/
+PKG_LIBS = -L/Users/rsrivas/Desktop/seq_utils/bamtools/lib/ -L/usr/local/Cellar/boost/1.59.0/lib/ -lbamtools -lz -lboost_iostreams

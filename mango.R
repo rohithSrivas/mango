@@ -47,7 +47,7 @@ option_list <- list(
   make_option(c("--linkerB"),  default="GTTGGAATGT",help="linker sequence B to look for"),
   make_option(c("--minlength"),  default="15",help="min length of reads after linker trimming"),
   make_option(c("--maxlength"),  default="25",help="max length of reads after linker trimming"),
-  make_option(c("--keepempty"),  default="FALSE",help="Should reads with no linker be kept"),
+  make_option(c("--keepempty"),  default="TRUE",help="Should reads with no linker be kept. Using the new nextera protocol, most reads will not have the linker."),
   
   #---------- STAGE 2 PARAMETERS ----------#
   
@@ -128,7 +128,7 @@ if( opt["ucsctoolspath"] != "NULL")
 bedtoolsversion  = system(paste(bedtoolspath,"--version"),intern=TRUE)[1]
 macs2version     = system(paste(macs2path,"--version 2>&1"),intern=TRUE)[1]
 bowtieversion    = system(paste(bowtiepath,"--version"),intern=TRUE)[1]
-samtoolsversion  = system(paste(samtoolspath,"--version"),intern=TRUE)[1]
+samtoolsversion  = system(paste(samtoolspath,"--version-only"),intern=TRUE)[1]
 ucsctoolsversion = system(paste(ucsctoolspath,"--version"),intern=TRUE)[1]
 
 # break if dependencies not found
@@ -224,18 +224,24 @@ if (1 %in% opt$stages)
   checkRequired(opt,c("fastq1","fastq2"))
 
   # gather arguments
-  outname         = as.character(opt["outname"])
-  fastq1=as.character(opt["fastq1"])
-  fastq2=as.character(opt["fastq2"])
-  basename = as.character(opt["outname"])
-  minlength = as.numeric(as.character(opt["minlength"]))
-  maxlength = as.numeric(as.character(opt["maxlength"]) )
-  keepempty=eval(parse(text=as.character(opt["keepempty"])))
-  linker1=as.character(opt["linkerA"])
-  linker2=as.character(opt["linkerB"])
+  outname         	= as.character(opt["outname"])
+  fastq1			= as.character(opt["fastq1"])
+  fastq2			= as.character(opt["fastq2"])
+  basename 			= as.character(opt["outname"])
+  minlength 		= as.numeric(as.character(opt["minlength"]))
+  maxlength 		= as.numeric(as.character(opt["maxlength"]) )
+  keepempty			= eval(parse(text=as.character(opt["keepempty"])))
+  linker1			= as.character(opt["linkerA"])
+  linker2			= as.character(opt["linkerB"])
   
   #Check if the FASTQ files are zipped
-  is.fastq.zipped <- any(str_detect(fastq1,c("\\.gz","\\.gzip")))
+  is.fastq1.zipped <- any(str_detect(fastq1,c("\\.gz","\\.gzip")))
+  is.fastq2.zipped <- any(str_detect(fastq2,c("\\.gz","\\.gzip")))
+  
+  if(is.fastq1.zipped!=is.fastq2.zipped) {
+	  print ("Both FASTQ files need to be either .GZIP or not zipped!")
+	  stop()
+  }
   
   print ("finding linkers")
   
@@ -247,6 +253,7 @@ if (1 %in% opt$stages)
               					  		minlength = minlength,
               					  		maxlength = maxlength, 
               					  		keepempty = keepempty,
+										verbose=TRUE,
               					  		linker1=linker1,
               					  		linker2=linker2)
 									
@@ -270,6 +277,7 @@ if (1 %in% opt$stages)
 	    resultshash[["chimeric PETs"]] = parsingresults[2]
 	    resultshash[["ambigious PETs"]] = parsingresults[3]
 	}
+	
 }
   
 ###################################### align reads #####################################
@@ -288,14 +296,16 @@ if (2 %in% opt$stages)
   print ("aligning reads")
   
   # filenames
-  fastq1 = paste(outname ,"_1.same.fastq",sep="")
-  fastq2 = paste(outname ,"_2.same.fastq",sep="")
-  bam1   = paste(outname ,"_1.same.bam",sep="")
-  bam2   = paste(outname ,"_2.same.bam",sep="")
+  fastq1 = 			paste(outname ,"_1.same.fastq",sep="")
+  fastq2 = 			paste(outname ,"_2.same.fastq",sep="")
+  bam1   = 			paste(outname ,"_1.same.bam",sep="")
+  bam2   = 			paste(outname ,"_2.same.bam",sep="")
+  bam1.sorted = 	paste(outname ,"_1.same.sorted.bam",sep="")
+  bam2.sorted = 	paste(outname ,"_2.same.sorted.bam",sep="")
   
   # align both ends of each PET
-  alignBowtie(fastq=fastq1,output=bam1,bowtiepath=bowtiepath,bowtieref=bowtieref,samtoolspath=samtoolspath,shortreads,num.threads=numThreads)
-  alignBowtie(fastq=fastq2,output=bam2,bowtiepath=bowtiepath,bowtieref=bowtieref,samtoolspath=samtoolspath,shortreads,num.threads=numThreads)
+  count1 <- alignBowtie(fastq=fastq1,output=bam1,bowtiepath=bowtiepath,bowtieref=bowtieref,samtoolspath=samtoolspath,shortreads,num.threads=numThreads)
+  count2 <- alignBowtie(fastq=fastq2,output=bam2,bowtiepath=bowtiepath,bowtieref=bowtieref,samtoolspath=samtoolspath,shortreads,num.threads=numThreads)
   
   # down sample the aligned files to keep the requested
   downSample     = as.numeric(opt["downsample_rate"])
@@ -303,10 +313,22 @@ if (2 %in% opt$stages)
   {
 	  print ("performing downsampling")
 	  bam1.ds   = paste(outname ,"_1.same_downSampled_",downSample,".bam",sep="")
-	  bam2.ds   = paste(outname ,"_2.same_downSampled_.",downSample,"bam",sep="")
+	  bam2.ds   = paste(outname ,"_2.same_downSampled_",downSample,"bam",sep="")
+	  
+	  bam1.sorted = 	paste(outname ,"_1.same.downSampled_",downSample,".sorted.bam",sep="")
+	  bam2.sorted = 	paste(outname ,"_2.same.downSampled_",downSample,".sorted.bam",sep="")
 	  
 	  downSampleBam(bam1,bam2,bam1.ds,bam2.ds,downSample)
   }
+  
+  #remove these fastq files (no need to keep it around)
+  file.remove(fastq1)
+  file.remove(fastq2)
+  
+  #sort by name
+  sortBAM(bamInputFile=bam1,bamOutputFile=bam1.sorted,samtools=samtoolspath,by.name=TRUE,num.threads=numThreads,verbose=TRUE)
+  sortBAM(bamInputFile=bam2,bamOutputFile=bam2.sorted,samtools=samtoolspath,by.name=TRUE,num.threads=numThreads,verbose=TRUE)
+  
 }
 
 ##################################### filter reads #####################################
@@ -323,8 +345,8 @@ if (3 %in% opt$stages)
   bedpefile          = paste(outname ,".bedpe",sep="")
   bedpefilesort      = paste(outname ,".sort.bedpe",sep="")
   bedpefilesortrmdup = paste(outname ,".sort.rmdup.bedpe",sep="")
-  bam1 = ifelse(downSample<1.0,paste(outname ,"_1.same_downSampled_",downSample,".bam",sep=""),paste(outname ,"_1.same.bam",sep=""))
-  bam2 = ifelse(downSample<1.0,paste(outname ,"_2.same_downSampled_",downSample,".bam",sep=""),paste(outname ,"_2.same.bam",sep=""))
+  bam1 = ifelse(downSample<1.0,paste(outname ,"_1.same_downSampled_",downSample,".sorted.bam",sep=""),paste(outname ,"_1.same.sorted.bam",sep=""))
+  bam2 = ifelse(downSample<1.0,paste(outname ,"_2.same_downSampled_",downSample,".sorted.bam",sep=""),paste(outname ,"_2.same.sorted.bam",sep=""))
   
   # build bedpe
   print ("building bedpe")
@@ -348,6 +370,7 @@ if (3 %in% opt$stages)
   {
     if (file.exists(rmdupresults[f])==TRUE){file.remove(rmdupresults[f])} 
   }
+  blah4444 <- 666
   
 #   # split by chrom and sort bedpe
 #   print ("sorting bedpe")
@@ -403,8 +426,7 @@ if (4 %in% opt$stages)
     # call peaks 
     print ("calling peaks")
     callpeaks(macs2path=macs2path,tagAlignfile,outname,qvalue=MACS_qvalue,
-             bedtoolspath=bedtoolspath,bedtoolsgenome=bedtoolsgenome,
-             peakslop=peakslop,MACS_shiftsize)
+             bedtoolspath=bedtoolspath,MACS_shiftsize=MACS_shiftsize)
   }
   
   # extend and merge peaks according to peakslop
@@ -817,9 +839,11 @@ if (6 %in% opt$stages)
 
 print ("writing to log file")
 
+# Output run time
 stoptime = paste("Analysis end time:" , as.character(Sys.time()))
 write(stoptime,file=logfile,append=TRUE)
 write("",file=logfile,append=TRUE)
+
 
 write("Software Versions:",file=logfile,append=TRUE)
 write(paste("mango version",":",Mangoversion),file=logfile,append=TRUE)

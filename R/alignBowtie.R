@@ -16,30 +16,36 @@ alignBowtie <- function(fastq,output,bowtiepath,bowtieref,samtoolspath,
                         shortreads,num.threads=1,verbose=TRUE)
 {
   
-  # choose alignment parameters
-  # note- "-m 1" ensures that only uniquely mapped reads are reported.
-  bowtievar=paste("-S -v 0 -k 1 --chunkmbs 500 -S --mapq 40 -m 1 -p ",num.threads,sep="")
-  if (shortreads == FALSE)
-  {
-    bowtievar=paste("-S -n 2 -l 50 -k 1 --chunkmbs 500 -S --mapq 40 -m 1 --best -p ",num.threads,sep="")
-  }
-  
-  # determine the illumina score encoding
-  illuminascore = findScore(fastq,nlines =10000) 
-  
-  # create the output to samtools pipe
-  samtoolsPipe <- " | samtools view -b - > "
-  
-  # form full command
-  bowtiecommand = paste (bowtiepath, bowtieref, fastq, illuminascore, bowtievar, samtoolsPipe)
-  
-  # print command if desirec
-  if (verbose ==TRUE)
-  {
-    print (bowtiecommand)
-  }
-  
-  # execute command
-  system(bowtiecommand)
+	# choose alignment parameters
+	# note- "-m 1" ensures that only uniquely mapped reads are reported.
+	bowtievar=paste("-S -v 0 -k 1 --chunkmbs 500 -S --mapq 40 -m 1 -p ",num.threads,sep="")
+	if (shortreads == FALSE)
+	{
+	bowtievar=paste("-S -n 2 -l 50 -k 1 --chunkmbs 500 -S --mapq 40 -m 1 --best -p ",num.threads,sep="")
+	}
+
+	# determine the illumina score encoding
+	illuminascore = findScore(fastq,nlines =10000) 
+
+	# create the output to samtools pipe
+	samtoolsPipe <- paste(" | ",samtoolspath," view -Sb - >",sep="")
+
+	# form full command
+	bowtiecommand = paste (bowtiepath, bowtieref, fastq, illuminascore, bowtievar, samtoolsPipe, output)
+
+	# print command if desirec
+	if (verbose ==TRUE)
+	{
+	print (bowtiecommand)
+	}
+
+	# execute command
+	system(bowtiecommand)
+
+	#execute command to get percent of reads mapped
+	count.command <- paste(satmoolspath," -c -F 4",output)
+	count <- system2(count.command,,stdout=TRUE)
+	
+	return(count)
 }
 
