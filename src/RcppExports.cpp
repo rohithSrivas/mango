@@ -67,7 +67,7 @@ BEGIN_RCPP
     return __result;
 END_RCPP
 }
-void downSampleBam(std::string inputBam1, std::string inputBam2, std::string outputBam1, std::string outputBam2, double sampleRate);
+/**void downSampleBam(std::string inputBam1, std::string inputBam2, std::string outputBam1, std::string outputBam2, double sampleRate);
 RcppExport SEXP mango_downSampleBam(SEXP inputBam1SEXP, SEXP inputBam2SEXP, SEXP outputBam1SEXP, SEXP outputBam2SEXP, SEXP sampleRateSEXP) {
 BEGIN_RCPP
 	Rcpp::RNGScope __rngScope;
@@ -79,9 +79,9 @@ BEGIN_RCPP
 	downSampleBam(inputBam1, inputBam2, outputBam1, outputBam2, sampleRate);
 	return R_NilValue;
 END_RCPP
-}
+}**/
 // mergeTwoBam
-void mergeTwoBam(std::string inputBam1, std::string inputBam2, std::string outputBam);
+/**void mergeTwoBam(std::string inputBam1, std::string inputBam2, std::string outputBam);
 RcppExport SEXP mango_mergeTwoBam(SEXP inputBam1SEXP, SEXP inputBam2SEXP, SEXP outputBamSEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope __rngScope;
@@ -91,7 +91,7 @@ BEGIN_RCPP
     mergeTwoBam(inputBam1, inputBam2, outputBam);
     return R_NilValue;
 END_RCPP
-}
+}**/
 // buildBedpe
 void buildBedpe(std::string sam1, std::string sam2, std::string bedpefile);
 RcppExport SEXP mango_buildBedpe(SEXP sam1SEXP, SEXP sam2SEXP, SEXP bedpefileSEXP) {

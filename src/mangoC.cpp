@@ -493,7 +493,7 @@ std::string NumberToString ( T Number )
 
 // Define a function for downsampling a given BAM file
 // [][Rcpp::export]]
-void downSampleBam(std::string inputBam1, std::string inputBam2, std::string outputBam1, std::string outputBam2, double sampleRate)
+/**void downSampleBam(std::string inputBam1, std::string inputBam2, std::string outputBam1, std::string outputBam2, double sampleRate)
 {
 	// open BAM file for reading
 	BamTools::BamReader reader1;
@@ -551,11 +551,11 @@ void downSampleBam(std::string inputBam1, std::string inputBam2, std::string out
 	reader2.Close();
 	writer1.Close();
 	writer2.Close();
-}
+}**/
 
 // Define a function for merging two BAM files
 // [[Rcpp::export]]
-void mergeTwoBam(std::string inputBam1, std::string inputBam2, std::string outputBam)
+/**void mergeTwoBam(std::string inputBam1, std::string inputBam2, std::string outputBam)
 {
 	std::vector<std::string> inputFileNames;
 	inputFileNames.push_back(inputBam1);
@@ -583,7 +583,7 @@ void mergeTwoBam(std::string inputBam1, std::string inputBam2, std::string outpu
 	
 	reader.Close();
 	writer.Close();
-}
+}**/
 
 
 // Define a newer function that builds a bedpe from 2 BAM files
