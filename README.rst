@@ -30,16 +30,19 @@ They can be installed throug CRAN. For example to install the package 'hash' ope
 
 2. Mango depends on the following software pacakges which should be installed and included in the system PATH prior to using Mango.
 
- a) Bowtie     (http://bowtie-bio.sourceforge.net)
- b) Bedtools   (https://github.com/arq5x/bedtools2)
- c) MACS2      (https://github.com/taoliu/MACS)
-
+ a) Bowtie					(http://bowtie-bio.sourceforge.net)
+ b) Bedtools				(https://github.com/arq5x/bedtools2)
+ c) MACS2					(https://github.com/taoliu/MACS)
+ d) UCSC command line tools	(http://hgdownload.cse.ucsc.edu/downloads.html#source_downloads)
+ e) Java					(https://www.oracle.com/java/index.html)
+ f) samtools				(http://samtools.sourceforge.net/)
+ g) PicardTools				(http://broadinstitute.github.io/picard/)
 
 3. Once dependencies are installed Mango can be installed from the command line using the following command.
 
 ::
 
-  git clone https://github.com/dphansti/mango.git
+  git clone https://github.com/rohithSrivas/mango.git
   R CMD INSTALL --no-multiarch --with-keep.source mango
 
 Features
