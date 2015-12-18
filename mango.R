@@ -37,6 +37,7 @@ option_list <- list(
   make_option(c("--bowtiepath"),  default="NULL",help="full path to bowtiepath"),
   make_option(c("--samtoolspath"),  default="NULL",help="full path to samtools"),
   make_option(c("--ucsctoolspath"), default="NULL",help="full path to ucsc tools"),
+  make_option(c("--picardtoolspath"), default="NULL",help="full path to picardtools"),
   make_option(c("--verboseoutput"),  default="FALSE",help="if true output file will have more columns as well as a header row describing the columns"),
   
   #---------- STAGE 1 PARAMETERS ----------#
@@ -93,13 +94,14 @@ opt <- parse_args(OptionParser(option_list=option_list))
 # check dependencies
 
 # first look in PATH
-progs = c("bedtools","macs2","bowtie","samtools","ucsc_tools")
+progs = c("bedtools","macs2","bowtie","samtools","ucsc_tools","picard-tools")
 Paths = DefinePaths(progs = progs)
 bedtoolspath  = Paths[1]
 macs2path     = Paths[2]
 bowtiepath    = Paths[3]
 samtoolspath  = Paths[4]
 ucsctoolspath = Paths[5]
+picardtoolspath = Paths[6]
 
 
 # next, look in arguments
@@ -123,13 +125,18 @@ if( opt["ucsctoolspath"] != "NULL")
 {
 	ucsctoolspath = opt["ucsctoolspath"]
 }
+if( opt["picardtoolspath"] != "NULL")
+{
+	picardtoolspath = opt["picardtoolspath"]
+}
 
 # get software versions
-bedtoolsversion  = system(paste(bedtoolspath,"--version"),intern=TRUE)[1]
-macs2version     = system(paste(macs2path,"--version 2>&1"),intern=TRUE)[1]
-bowtieversion    = system(paste(bowtiepath,"--version"),intern=TRUE)[1]
-samtoolsversion  = system(paste(samtoolspath,"--version-only"),intern=TRUE)[1]
-ucsctoolsversion = system(paste(ucsctoolspath,"--version"),intern=TRUE)[1]
+bedtoolsversion  	= system(paste(bedtoolspath,"--version"),intern=TRUE)[1]
+macs2version     	= system(paste(macs2path,"--version 2>&1"),intern=TRUE)[1]
+bowtieversion    	= system(paste(bowtiepath,"--version"),intern=TRUE)[1]
+samtoolsversion  	= system(paste(samtoolspath,"--version-only"),intern=TRUE)[1]
+ucsctoolsversion 	= system(paste(ucsctoolspath,"--version"),intern=TRUE)[1]
+picardtoolsverson 	= system(paste(picardtoolspath,"/DownsampleSam.jar --version",sep=""),intern=TRUE)[1] 
 
 # break if dependencies not found
 Paths = c(bedtoolspath,macs2path,bowtiepath,samtoolspath,ucsctoolspath)
@@ -311,21 +318,30 @@ if (2 %in% opt$stages)
   downSample     = as.numeric(opt["downsample_rate"])
   if(downSample < 1.0) 
   {
+	  checkRequired(opt,c("picardtoolspath"))
+	  
 	  print ("performing downsampling")
-	  bam1.ds   = paste(outname ,"_1.same_downSampled_",downSample,".bam",sep="")
-	  bam2.ds   = paste(outname ,"_2.same_downSampled_",downSample,"bam",sep="")
+	  bam1.ds = 		paste(outname ,"_1.same_downSampled_",downSample,".bam",sep="")
+	  bam2.ds = 		paste(outname ,"_2.same_downSampled_",downSample,"bam",sep="")
 	  
-	  bam1.sorted = 	paste(outname ,"_1.same.downSampled_",downSample,".sorted.bam",sep="")
-	  bam2.sorted = 	paste(outname ,"_2.same.downSampled_",downSample,".sorted.bam",sep="")
+	  bam1.ds.sorted = 	paste(outname ,"_1.same.downSampled_",downSample,".sorted.bam",sep="")
+	  bam2.ds.sorted = 	paste(outname ,"_2.same.downSampled_",downSample,".sorted.bam",sep="")
 	  
-	  downSampleBam(bam1,bam2,bam1.ds,bam2.ds,downSample)
+	  #Down sample
+	  downSampleBam(bam1,bam1.ds,downSample,verbose=TRUE)
+	  downSampleBam(bam2,bam2.ds,downSample,verbose=TRUE)
+	  
+	  #Sort by name
+	  sortBAM(bamInputFile=bam1.ds,bamOutputFile=bam1.ds.sorted,samtools=samtoolspath,by.name=TRUE,num.threads=numThreads,verbose=TRUE)
+	  sortBAM(bamInputFile=bam1.ds,bamOutputFile=bam1.ds.sorted,samtools=samtoolspath,by.name=TRUE,num.threads=numThreads,verbose=TRUE)	  
+	  
   }
   
   #remove these fastq files (no need to keep it around)
   file.remove(fastq1)
   file.remove(fastq2)
   
-  #sort by name
+  #sort by name (this will sort the non-downsampled reads for convenience)
   sortBAM(bamInputFile=bam1,bamOutputFile=bam1.sorted,samtools=samtoolspath,by.name=TRUE,num.threads=numThreads,verbose=TRUE)
   sortBAM(bamInputFile=bam2,bamOutputFile=bam2.sorted,samtools=samtoolspath,by.name=TRUE,num.threads=numThreads,verbose=TRUE)
   
@@ -851,6 +867,7 @@ write(paste("macs2 version",":",macs2version),file=logfile,append=TRUE)
 write(paste("bowtie version",":",bowtieversion),file=logfile,append=TRUE)
 write(paste("samtools version",":",samtoolsversion),file=logfile,append=TRUE)
 write(paste("ucsc genome tools version",":",ucsctoolsversion),file=logfile,append=TRUE)
+write(paste("picard tools vesion",":",picardtoolsversion),file=logfile,append=TRUE)
 
 write("",file=logfile,append=TRUE)
 write("Analyzed by Mango using the following parameters:",file=logfile,append=TRUE)

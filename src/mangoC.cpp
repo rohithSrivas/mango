@@ -14,7 +14,6 @@ using namespace Rcpp;
 #include <sstream>
 #include <bitset>
 #include <map>
-#include <random>
 #include "boost/iostreams/filtering_streambuf.hpp"
 #include "boost/iostreams/copy.hpp"
 #include "boost/iostreams/filter/gzip.hpp"
@@ -489,68 +488,6 @@ std::string NumberToString ( T Number )
   stringstream ss;
 	ss << Number;
 	return ss.str();
-}
-
-// Define a function for downsampling a given BAM file
-// [][Rcpp::export]]
-void downSampleBam(std::string inputBam1, std::string inputBam2, std::string outputBam1, std::string outputBam2, double sampleRate)
-{
-	// open BAM file for reading
-	BamTools::BamReader reader1;
-	BamTools::BamReader reader2;
-	
-	// open BAM file for writing
-	BamTools::BamWriter writer1;
-	BamTools::BamWriter writer2;
-	
-	// attempt to open and close things
-	if (!reader1.Open(inputBam1))
-	{
-		std::cerr << "Could not open input BAM file 1 for downsampling." << endl;
-		return;
-	}
-	if (!reader2.Open(inputBam2))
-	{
-		std::cerr << "Could not open input BAM file 2 for downsampling." << endl;
-		return;
-	}
-	
-	const BamTools::SamHeader header1 = reader1.GetHeader();
-	const BamTools::RefVector references1 = reader1.GetReferenceData();
-	const BamTools::SamHeader header2 = reader2.GetHeader();
-	const BamTools::RefVector references2 = reader2.GetReferenceData();
-	
-	if(!writer1.Open(outputBam1,header1,references1))
-	{
-		std::cerr << "Could not open output BAM file" << endl;
-		return;
-	}
-	if(!writer2.Open(outputBam2,header2,references2))
-	{
-		std::cerr << "Could not open output BAM file" << endl;
-		return;
-	}
-	
-	// iterate and down sample randomly
-	std::default_random_engine generator;
-	std::uniform_real_distribution<double> distribution(0.0,1.0);
-	BamTools::BamAlignment al1;
-	BamTools::BamAlignment al2;
-	while( reader1.GetNextAlignmentCore(al1))
-	{
-		reader2.GetNextAlignmentCore(al2);
-		double number = distribution(generator);
-		if(number<sampleRate) {
-			writer1.SaveAlignment(al1);
-			writer2.SaveAlignment(al2);
-		}
-	}
-	
-	// close all streams
-	reader1.Close();
-	reader2.Close();
-	writer1.Close();
-	writer2.Close();
 }
 
 // Define a function for merging two BAM files

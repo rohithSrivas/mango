@@ -67,19 +67,6 @@ BEGIN_RCPP
     return __result;
 END_RCPP
 }
-void downSampleBam(std::string inputBam1, std::string inputBam2, std::string outputBam1, std::string outputBam2, double sampleRate);
-RcppExport SEXP mango_downSampleBam(SEXP inputBam1SEXP, SEXP inputBam2SEXP, SEXP outputBam1SEXP, SEXP outputBam2SEXP, SEXP sampleRateSEXP) {
-BEGIN_RCPP
-	Rcpp::RNGScope __rngScope;
-	Rcpp::traits::input_parameter< std::string >::type inputBam1(inputBam1SEXP);
-	Rcpp::traits::input_parameter< std::string >::type inputBam2(inputBam2SEXP);
-	Rcpp::traits::input_parameter< std::string >::type outputBam1(outputBam1SEXP);
-	Rcpp::traits::input_parameter< std::string >::type outputBam2(outputBam2SEXP);
-	Rcpp::traits::input_parameter< double >::type sampleRate(sampleRateSEXP);
-	downSampleBam(inputBam1, inputBam2, outputBam1, outputBam2, sampleRate);
-	return R_NilValue;
-END_RCPP
-}
 // mergeTwoBam
 void mergeTwoBam(std::string inputBam1, std::string inputBam2, std::string outputBam);
 RcppExport SEXP mango_mergeTwoBam(SEXP inputBam1SEXP, SEXP inputBam2SEXP, SEXP outputBamSEXP) {

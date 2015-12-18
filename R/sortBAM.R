@@ -26,9 +26,8 @@ sortBAM <- function(bamInputFile,bamOutputFile,samtools,by.name=TRUE,num.threads
 	samtoolscommand = paste (samtools, samtoolsoptions, bamInputFile,">",bamOutputFile)
 
 	# print command if desirec
-	if (verbose ==TRUE)
-	{
-	print (samtoolscommand)
+	if (verbose ==TRUE) {
+		print (samtoolscommand)
 	}
 
 	# execute command
