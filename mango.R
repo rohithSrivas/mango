@@ -10,7 +10,6 @@ suppressPackageStartupMessages(library("mango"))
 suppressPackageStartupMessages(library("optparse"))
 suppressPackageStartupMessages(library("stringr"))
 suppressPackageStartupMessages(library("caTools"))
-suppressPackageStartupMessages(library("spp"))
 suppressPackageStartupMessages(library("snow"))
 
 print ("Starting mango ChIA PET analysis tool")
@@ -54,7 +53,7 @@ option_list <- list(
   
   make_option(c("--shortreads"),  default="TRUE",help="should bowtie alignments be done using paramter for very short reads (~20 bp)"),
   make_option(c("--downsample_rate"),  default="1.0",help="should bowtie alignments be done using paramter for very short reads (~20 bp)"),
-  make_option(c("--numThreads")), default=1,help="number of concurrent threads to use when aligning reads with bowtie"),
+  make_option(c("--numThreads"), default=1,help="number of concurrent threads to use when aligning reads with bowtie"),
 
   #---------- STAGE 4 PARAMETERS ----------#
   
@@ -94,7 +93,7 @@ opt <- parse_args(OptionParser(option_list=option_list))
 # check dependencies
 
 # first look in PATH
-progs = c("bedtools","macs2","bowtie","samtools","ucsc_tools","picard-tools")
+progs = c("bedtools","macs2","bowtie","samtools","bedGraphToBigWig","DownsampleSam.jar")
 Paths = DefinePaths(progs = progs)
 bedtoolspath  = Paths[1]
 macs2path     = Paths[2]
@@ -102,7 +101,6 @@ bowtiepath    = Paths[3]
 samtoolspath  = Paths[4]
 ucsctoolspath = Paths[5]
 picardtoolspath = Paths[6]
-
 
 # next, look in arguments
 if (opt["bedtoolspath"] != "NULL")
@@ -134,12 +132,10 @@ if( opt["picardtoolspath"] != "NULL")
 bedtoolsversion  	= system(paste(bedtoolspath,"--version"),intern=TRUE)[1]
 macs2version     	= system(paste(macs2path,"--version 2>&1"),intern=TRUE)[1]
 bowtieversion    	= system(paste(bowtiepath,"--version"),intern=TRUE)[1]
-samtoolsversion  	= system(paste(samtoolspath,"--version-only"),intern=TRUE)[1]
-ucsctoolsversion 	= system(paste(ucsctoolspath,"--version"),intern=TRUE)[1]
-picardtoolsverson 	= system(paste(picardtoolspath,"/DownsampleSam.jar --version",sep=""),intern=TRUE)[1] 
+samtoolsversion  	= system(paste(samtoolspath,"--version-only"),intern=TRUE)[1] 
 
 # break if dependencies not found
-Paths = c(bedtoolspath,macs2path,bowtiepath,samtoolspath,ucsctoolspath)
+Paths = c(bedtoolspath,macs2path,bowtiepath,samtoolspath,ucsctoolspath,picardtoolspath)
 i = 0
 pathsOK = T
 for (p in Paths)
@@ -866,8 +862,6 @@ write(paste("bedtools version",":",bedtoolsversion),file=logfile,append=TRUE)
 write(paste("macs2 version",":",macs2version),file=logfile,append=TRUE)
 write(paste("bowtie version",":",bowtieversion),file=logfile,append=TRUE)
 write(paste("samtools version",":",samtoolsversion),file=logfile,append=TRUE)
-write(paste("ucsc genome tools version",":",ucsctoolsversion),file=logfile,append=TRUE)
-write(paste("picard tools vesion",":",picardtoolsversion),file=logfile,append=TRUE)
 
 write("",file=logfile,append=TRUE)
 write("Analyzed by Mango using the following parameters:",file=logfile,append=TRUE)

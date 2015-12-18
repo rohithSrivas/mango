@@ -12,7 +12,7 @@
 downSampleBam <- function(bamInputFile, bamOutputFile, picardToolsPath,prob,verbose)
 {
 	#Setup command
-	command <- paste("java -jar -Xmx2g ",picardToolsPath,"DownsampleSam.jar I=",bamInputFile," O=",bamOutputFile," P=",prob," R=123",sep="")
+	command <- paste("java -jar -Xmx2g ",picardToolsPath," I=",bamInputFile," O=",bamOutputFile," P=",prob," R=123",sep="")
 	
 	# print command if desired
 	if (verbose ==TRUE) {
