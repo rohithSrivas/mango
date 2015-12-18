@@ -370,7 +370,6 @@ if (3 %in% opt$stages)
   {
     if (file.exists(rmdupresults[f])==TRUE){file.remove(rmdupresults[f])} 
   }
-  blah4444 <- 666
   
 #   # split by chrom and sort bedpe
 #   print ("sorting bedpe")
