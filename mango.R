@@ -46,12 +46,12 @@ option_list <- list(
   make_option(c("--linkerA"),  default="GTTGGATAAG",help="linker sequence A to look for"),
   make_option(c("--linkerB"),  default="GTTGGAATGT",help="linker sequence B to look for"),
   make_option(c("--minlength"),  default="15",help="min length of reads after linker trimming"),
-  make_option(c("--maxlength"),  default="25",help="max length of reads after linker trimming"),
+  make_option(c("--maxlength"),  default="1000",help="max length of reads after linker trimming"),
   make_option(c("--keepempty"),  default="TRUE",help="Should reads with no linker be kept. Using the new nextera protocol, most reads will not have the linker."),
   
   #---------- STAGE 2 PARAMETERS ----------#
   
-  make_option(c("--shortreads"),  default="TRUE",help="should bowtie alignments be done using paramter for very short reads (~20 bp)"),
+  make_option(c("--shortreads"),  default="FALSE",help="should bowtie alignments be done using paramter for very short reads (~20 bp)"),
   make_option(c("--downsample_rate"),  default="1.0",help="should bowtie alignments be done using paramter for very short reads (~20 bp)"),
   make_option(c("--numThreads"), default=1,help="number of concurrent threads to use when aligning reads with bowtie"),
 
@@ -245,7 +245,6 @@ if (1 %in% opt$stages)
 	  print ("Both FASTQ files need to be either .GZIP or not zipped!")
 	  stop()
   }
-  
   print ("finding linkers")
   
   #If zipped, no need to unzip, just process it
