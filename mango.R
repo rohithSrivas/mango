@@ -248,7 +248,7 @@ if (1 %in% opt$stages)
   print ("finding linkers")
   
   #If zipped, no need to unzip, just process it
-  if(is.fastq.zipped) {
+  if(is.fastq1.zipped) {
   	parsingresults = parseFastq_gzip(	fastq1=fastq1,
               							fastq2=fastq2,
               					  		basename = basename,
