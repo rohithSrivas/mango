@@ -28,5 +28,3 @@ extendpeaks <- function(peaksfile=peaksfile,peaksfileslop=peaksfileslop,
   nummergepeaks = nrow(mergedpeaks)
   return(c(numpeaks,nummergepeaks)) 
 }
-
-bedtools intersect -v -a DU145_Rep1_peaks.slopPeak -b /srv/gsfs0/projects/snyder/rsrivas/CP/ImportantFiles/encode_hg19_blacklist.bed > tmp.bed ; mv tmp.bed DU145_Rep1_peaks.slopPeak
