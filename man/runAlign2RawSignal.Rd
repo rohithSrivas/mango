@@ -2,10 +2,14 @@
 \alias{runAlign2RawSignal}
 \title{Produce signal track data using align2rawsignal}
 \usage{
-runAlign2RawSignal(input.bam,output.mat.file,temp.output.bedgraph.file,output.bw.file,path.to.mcr,path.to.align2rawsignal,bedtoolsgenome,fragLength,chrDir,mapDir)
+runAlign2RawSignal(input.bam,temp.filtered.bam,path.to.bamutils,output.mat.file,temp.output.bedgraph.file,output.bw.file,path.to.mcr,path.to.align2rawsignal,bedtoolsgenome,fragLength,chrDir,mapDir,verbose)
 }
 \arguments{
   \item{input.bam}{full path to input bam file}
+  
+  \item{temp.filtered.bam}{full path to temporary bam file filtered for very short or very long reads}
+  
+  \item{path.to.bamutils}{full path to the NSGUtils bamutils program}
 
   \item{output.mat.file}{output file containing signal track data in MATLAB mat format}
 
@@ -24,6 +28,8 @@ runAlign2RawSignal(input.bam,output.mat.file,temp.output.bedgraph.file,output.bw
   \item{chrDir}{path to directory containing individual chromsome fasta files}
   
   \item{mapDir}{path to directory containing mappability files}
+  
+  \item{verbose}{Flag to determine whether to output the executed commands to file}
 }
 \description{
 This function produces signal track data in both MAT and BW formats using align2rawsignal

@@ -43,8 +43,8 @@ alignBowtie <- function(fastq,output,bowtiepath,bowtieref,samtoolspath,
 	system(bowtiecommand)
 
 	#execute command to get percent of reads mapped
-	count.command <- paste(samtoolspath," -c -F 4",output)
-	count <- system2(count.command,stdout=TRUE)
+	count.command <- paste(samtoolspath,"view -c -F 4",output)
+	count <- system(count.command,intern=TRUE)
 	
 	return(count)
 }

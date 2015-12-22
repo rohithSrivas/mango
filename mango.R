@@ -37,6 +37,7 @@ option_list <- list(
   make_option(c("--samtoolspath"),  default="NULL",help="full path to samtools"),
   make_option(c("--ucsctoolspath"), default="NULL",help="full path to ucsc tools"),
   make_option(c("--picardtoolspath"), default="NULL",help="full path to picardtools"),
+  make_option(c("--bamutilspath"), default="NULL",help="full path to bamutils"),
   make_option(c("--verboseoutput"),  default="FALSE",help="if true output file will have more columns as well as a header row describing the columns"),
   
   #---------- STAGE 1 PARAMETERS ----------#
@@ -93,7 +94,7 @@ opt <- parse_args(OptionParser(option_list=option_list))
 # check dependencies
 
 # first look in PATH
-progs = c("bedtools","macs2","bowtie","samtools","bedGraphToBigWig","DownsampleSam.jar")
+progs = c("bedtools","macs2","bowtie","samtools","bedGraphToBigWig","DownsampleSam.jar","bamutils")
 Paths = DefinePaths(progs = progs)
 bedtoolspath  = Paths[1]
 macs2path     = Paths[2]
@@ -101,6 +102,7 @@ bowtiepath    = Paths[3]
 samtoolspath  = Paths[4]
 ucsctoolspath = Paths[5]
 picardtoolspath = Paths[6]
+bamutilspath = Paths[7]
 
 # next, look in arguments
 if (opt["bedtoolspath"] != "NULL")
@@ -127,6 +129,10 @@ if( opt["picardtoolspath"] != "NULL")
 {
 	picardtoolspath = opt["picardtoolspath"]
 }
+if( opt["bamutilspath"] != "NULL")
+{
+	bamutilspath = opt["bamutilspath"]
+}
 
 # get software versions
 bedtoolsversion  	= system(paste(bedtoolspath,"--version"),intern=TRUE)[1]
@@ -135,7 +141,7 @@ bowtieversion    	= system(paste(bowtiepath,"--version"),intern=TRUE)[1]
 samtoolsversion  	= system(paste(samtoolspath,"--version-only"),intern=TRUE)[1] 
 
 # break if dependencies not found
-Paths = c(bedtoolspath,macs2path,bowtiepath,samtoolspath,ucsctoolspath,picardtoolspath)
+Paths = c(bedtoolspath,macs2path,bowtiepath,samtoolspath,ucsctoolspath,picardtoolspath,bamutilspath)
 i = 0
 pathsOK = T
 for (p in Paths)
@@ -308,6 +314,8 @@ if (2 %in% opt$stages)
   # align both ends of each PET
   count1 <- alignBowtie(fastq=fastq1,output=bam1,bowtiepath=bowtiepath,bowtieref=bowtieref,samtoolspath=samtoolspath,shortreads,num.threads=numThreads)
   count2 <- alignBowtie(fastq=fastq2,output=bam2,bowtiepath=bowtiepath,bowtieref=bowtieref,samtoolspath=samtoolspath,shortreads,num.threads=numThreads)
+  resultshash[["# of aligned reads (PE1)"]] = count1
+  resultshash[["# of aligned reads (PE2)"]] = count2
   
   # down sample the aligned files to keep the requested
   downSample     = as.numeric(opt["downsample_rate"])
@@ -333,10 +341,12 @@ if (2 %in% opt$stages)
   }
   
   #remove these fastq files (no need to keep it around)
+  print("deleting split FASTQ files.")
   file.remove(fastq1)
   file.remove(fastq2)
   
   #sort by name (this will sort the non-downsampled reads for convenience)
+  print("sorting reads")
   sortBAM(bamInputFile=bam1,bamOutputFile=bam1.sorted,samtools=samtoolspath,by.name=TRUE,num.threads=numThreads,verbose=TRUE)
   sortBAM(bamInputFile=bam2,bamOutputFile=bam2.sorted,samtools=samtoolspath,by.name=TRUE,num.threads=numThreads,verbose=TRUE)
   
@@ -816,6 +826,7 @@ if (6 %in% opt$stages)
 	bw.file = paste(outname,"_signalTrack.bw",sep="")
 	qual.results.file = paste(outname,"_chipQual_results.txt",sep="")
 	qual.results.plot.file = paste(outname,"_chipQual_plot.pdf",sep="")
+	temp.filtered.bam = paste(outname,"_tempFiltered.bam",sep="")
 	
 	# merge bam files temporarily
 	mergeTwoBam(bam1,bam2,temp.merged.bam)
@@ -825,15 +836,19 @@ if (6 %in% opt$stages)
 						output.results.file=qual.results.file,
 						output.plot.file=qual.results.plot.file,
 						path.to.phantom.script=sppScriptFile,
-						num.threads=numThreads)
+						num.threads=numThreads,
+						verbose=TRUE)
 	
 	# extract the expected fragment length
 	phantom.dat <- read.table(qual.results.file,sep="\t")
 	frag.length <- unlist(strsplit(as.character(phantom.dat),","))[1]
+	resultshash[["estimated fragment length"]] = frag.length
 	
 	# run the align2rawsignal 
 	runAlign2RawSignal(	input.bam=temp.merged.bam,
 						output.mat.file=mat.file,
+						temp.filtered.bam=temp.filtered.bam,
+						path.to.bamutils=bamutilspath,
 						temp.output.bedgraph.file=temp.bedgraph,
 						output.bw.file=bw.file,
 						path.to.mcr=mcrPath,
@@ -841,7 +856,8 @@ if (6 %in% opt$stages)
 						bedtoolsgenome=bedtoolsgenome,
 						fragLength=frag.length,
 						chrDir=chrfastaDir,
-						mapDir=mappabilityDir)
+						mapDir=mappabilityDir,
+						verbose=TRUE)
 					
 } 
 

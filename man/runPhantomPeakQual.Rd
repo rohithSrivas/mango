@@ -14,7 +14,9 @@ runPhantomPeakQual(input.bam,output.results.file,output.plot.file,path.to.phanto
   \item{path.to.phantom.script}{path to run_spp.R [script for running phantom peak quals]}
 
   \item{num.threads}{Number of parallel threads to utilize for computing strand cross-correlation}
+  
+  \item{verbose}{Flag to determine whether to output the executed commands to file}
 }
 \description{
-This function assesses ChIP quality using the phantompeakquals toolkit; it produces estimates of RSC, NSC, and estimated fragment length.
+This function assesses ChIP quality using the phantompeakquals toolkit; it produces estimates of RSC, NSC, and estimated fragment length. It also outputs a PDF plot of the cross-correlation analysis.
 }
