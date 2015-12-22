@@ -445,14 +445,22 @@ if (4 %in% opt$stages)
     
     # call peaks 
     print ("calling peaks")
-    callpeaks(macs2path=macs2path,tagAlignfile,outname,qvalue=MACS_qvalue,
-             bedtoolspath=bedtoolspath,MACS_shiftsize=MACS_shiftsize)
+    callpeaks(	macs2path=macs2path,
+				tagAlignfile=tagAlignfile,
+				peaksfile=outname,
+				qvalue=MACS_qvalue,
+				MACS_shiftsize=MACS_shiftsize)
   }
   
   # extend and merge peaks according to peakslop
   print ("extending peaks")
-  peakcounts = extendpeaks(peaksfile,peaksfileslop,bedtoolspath=bedtoolspath,
-             bedtoolsgenome=bedtoolsgenome,peakslop=peakslop,blacklist=blacklist)
+  peakcounts = extendpeaks(	peaksfile=peaksfile,
+	  						peaksfileslop=peaksfileslop,
+							bedtoolspath=bedtoolspath,
+             			   	bedtoolsgenome=bedtoolsgenome,
+							peakslop=peakslop,
+							blacklist=blacklist)
+  
   resultshash[["peaks"]] = peakcounts[1]
   resultshash[["mergedpeaks"]] = peakcounts[2]
 }
