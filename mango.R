@@ -80,7 +80,7 @@ option_list <- list(
   make_option(c("--MHT"),  default="all",help="How should mutliple hypothsesis testing be done?  Correct for 'all' possible pairs of loci or only those 'found' with at least 1 PET"),
   
   #---------- STAGE 6 PARAMETERS ----------#
-  make_option(c("--sppScriptFile"),	default="NULL",help="location of phantompeakqual tools R script")
+  make_option(c("--sppScriptFile"),	default="NULL",help="location of phantompeakqual tools R script"),
   
   #---------- STAGE 7 PARAMETERS ----------#
   make_option(c("--mcrPath"),	default="NULL",help="full path to MCR v17 installed toolkit"), 
