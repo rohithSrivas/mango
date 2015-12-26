@@ -11,6 +11,7 @@ suppressPackageStartupMessages(library("optparse"))
 suppressPackageStartupMessages(library("stringr"))
 suppressPackageStartupMessages(library("caTools"))
 suppressPackageStartupMessages(library("snow"))
+suppressPackageStartupMessages(library("spp"))
 
 print ("Starting mango ChIA PET analysis tool")
 Sys.time()
@@ -79,12 +80,15 @@ option_list <- list(
   make_option(c("--MHT"),  default="all",help="How should mutliple hypothsesis testing be done?  Correct for 'all' possible pairs of loci or only those 'found' with at least 1 PET"),
   
   #---------- STAGE 6 PARAMETERS ----------#
+  make_option(c("--sppScriptFile"),	default="NULL",help="location of phantompeakqual tools R script")
   
+  #---------- STAGE 7 PARAMETERS ----------#
   make_option(c("--mcrPath"),	default="NULL",help="full path to MCR v17 installed toolkit"), 
   make_option(c("--align2rawsignalpath"),	default="NULL",help="full path to align2rawsignal program"),
   make_option(c("--chrfastaDir"),	default="NULL",help="path to directory containing individual chromosome fasta files"),
-  make_option(c("--mappabilityDir"),	default="NULL",help="path to directory containing mappability tracks"),
-  make_option(c("--sppScriptFile"),	default="NULL",help="location of phantompeakqual tools R script")
+  make_option(c("--fragLength"),	default="200",help="estimated mean insert size"),
+  make_option(c("--mappabilityDir"),	default="NULL",help="path to directory containing mappability tracks")
+  
 )
 
 # get command line options, if help option encountered print help and exit,
@@ -801,27 +805,17 @@ if (5 %in% opt$stages)
   }
 }
 
-############################### assess chip quality and produce signal track data ###############################
+############################### assess chip quality ###############################
 
 if (6 %in% opt$stages)
-{
-	checkRequired(opt,c("align2rawsignalpath"))
-	checkRequired(opt,c("chrfastaDir"))
-	checkRequired(opt,c("mappabilityDir"))
+{	
 	checkRequired(opt,c("sppScriptFile"))
-	checkRequired(opt,c("mcrPath"))
-	checkRequired(opt,c("bedtoolsgenome"))
 	
 	# gather arguments
 	outname					= as.character(opt["outname"])
-	align2rawsignalpath 	= as.character(opt["align2rawsignalpath"])
-	chrfastaDir				= as.character(opt["chrfastaDir"])
-	mappabilityDir			= as.character(opt["mappabilityDir"])
 	sppScriptFile			= as.character(opt["sppScriptFile"])
 	numThreads				= as.numeric(opt["numThreads"])
 	downSample      		= as.numeric(opt["downsample_rate"])
-	mcrPath					= as.character(opt["mcrPath"])
-	bedtoolsgenome			= as.character(opt["bedtoolsgenome"])
 	
 	print ("assessing chip quality and producing signal track data")
 	
@@ -829,15 +823,15 @@ if (6 %in% opt$stages)
     bam1 = ifelse(downSample<1.0,paste(outname ,"_1.same_downSampled_",downSample,".bam",sep=""),paste(outname ,"_1.same.bam",sep=""))
     bam2 = ifelse(downSample<1.0,paste(outname ,"_2.same_downSampled_",downSample,".bam",sep=""),paste(outname ,"_2.same.bam",sep=""))
 	temp.merged.bam = paste(outname,"_tempMerged.bam",sep="") 
-	mat.file = paste(outname,"_signalTrack_MAT.mat",sep="")
-	temp.bedgraph = paste(outname,"_temp.bedGraph",sep="")
-	bw.file = paste(outname,"_signalTrack.bw",sep="")
 	qual.results.file = paste(outname,"_chipQual_results.txt",sep="")
 	qual.results.plot.file = paste(outname,"_chipQual_plot.pdf",sep="")
-	temp.filtered.bam = paste(outname,"_tempFiltered.bam",sep="")
 	
 	# merge bam files temporarily
-	mergeTwoBam(bam1,bam2,temp.merged.bam)
+	if(!file.exists(temp.merged.bam))
+	{
+		print ("merging bam files temporarily")
+		mergeTwoBam(bam1,bam2,temp.merged.bam)
+	}
 	
 	#Run the phantom peakquality tools and acquire estimated fragment length
 	runPhantomPeakQual(	input.bam=temp.merged.bam,
@@ -851,6 +845,44 @@ if (6 %in% opt$stages)
 	phantom.dat <- read.table(qual.results.file,sep="\t")
 	frag.length <- unlist(strsplit(as.character(phantom.dat),","))[1]
 	resultshash[["estimated fragment length"]] = frag.length
+	opt["fragLength"] = frag.length
+					
+}
+
+
+############################### produce signal track data ###############################
+
+if (7 %in% opt$stages)
+{
+	checkRequired(opt,c("align2rawsignalpath"))
+	checkRequired(opt,c("chrfastaDir"))
+	checkRequired(opt,c("mappabilityDir"))
+	checkRequired(opt,c("mcrPath"))
+	checkRequired(opt,c("bedtoolsgenome"))
+	
+	# gather arguments
+	align2rawsignalpath 	= as.character(opt["align2rawsignalpath"])
+	chrfastaDir				= as.character(opt["chrfastaDir"])
+	mappabilityDir			= as.character(opt["mappabilityDir"])
+	mcrPath					= as.character(opt["mcrPath"])
+	bedtoolsgenome			= as.character(opt["bedtoolsgenome"])
+	frag.length				= as.numeric(opt["fragLength"])
+	
+	# generate file names
+    bam1 = ifelse(downSample<1.0,paste(outname ,"_1.same_downSampled_",downSample,".bam",sep=""),paste(outname ,"_1.same.bam",sep=""))
+    bam2 = ifelse(downSample<1.0,paste(outname ,"_2.same_downSampled_",downSample,".bam",sep=""),paste(outname ,"_2.same.bam",sep=""))
+	temp.merged.bam = paste(outname,"_tempMerged.bam",sep="") 
+	mat.file = paste(outname,"_signalTrack_MAT.mat",sep="")
+	temp.bedgraph = paste(outname,"_temp.bedGraph",sep="")
+	bw.file = paste(outname,"_signalTrack.bw",sep="")
+	temp.filtered.bam = paste(outname,"_tempFiltered.bam",sep="")
+	
+	# merge bam files temporarily
+	if(!file.exists(temp.merged.bam))
+	{
+		print ("merging bam files temporarily")
+		mergeTwoBam(bam1,bam2,temp.merged.bam)
+	}
 	
 	# run the align2rawsignal 
 	runAlign2RawSignal(	input.bam=temp.merged.bam,
@@ -866,7 +898,6 @@ if (6 %in% opt$stages)
 						chrDir=chrfastaDir,
 						mapDir=mappabilityDir,
 						verbose=TRUE)
-					
 } 
 
 ##################################### Make Log file #####################################

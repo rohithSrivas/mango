@@ -7,7 +7,7 @@
 #' @param output.results.plot.file output plot containing results of strand cross-correlation
 #' @param path.to.phantom.script path to run_spp.R [script for running phantom peak quals]
 #' @param num.threads Number of parallel threads to utilize for computing strand cross-correlation
-#' @param verbose Flag to determine whether to output the executed commands to file
+#' @param verbose Flag to determine whether to output the executed commands to system out
 #' @export
 #' 
 runPhantomPeakQual <- function(	input.bam,
