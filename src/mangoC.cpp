@@ -14,7 +14,6 @@ using namespace Rcpp;
 #include <sstream>
 #include <bitset>
 #include <map>
-#include <stdlib>	//added line
 #include "boost/iostreams/filtering_streambuf.hpp"
 #include "boost/iostreams/copy.hpp"
 #include "boost/iostreams/filter/gzip.hpp"
