@@ -89,7 +89,7 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< std::string >::type outputBamFile1(outputBamFile1SEXP);
 	Rcpp::traits::input_parameter< std::string >::type outputBamFile2(outputBamFile2SEXP);
 	Rcpp::traits::input_parameter< double >::type sampleFrac(sampleFracSEXP);
-    subSampleBam(bamFile1, bamFile2, outputBamFile1,outputBamFile2,sampleFrac);
+    subSampleBam(bamFile1, bamFile2, outputBamFile1, outputBamFile2, sampleFrac);
     return R_NilValue;
 END_RCPP
 }

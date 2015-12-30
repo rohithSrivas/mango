@@ -693,7 +693,7 @@ void subSampleBam(std::string bamFile1, std::string bamFile2, std::string output
 	}
 	
 	BamTools::BamWriter writer2;
-	if(!writer1.Open(outputBamFile2,header2,references2)) {
+	if(!writer2.Open(outputBamFile2,header2,references2)) {
 		std::cerr << "Could not open output BAM file 2!" << endl;
 		return;
 	}
