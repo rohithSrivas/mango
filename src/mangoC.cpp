@@ -700,13 +700,13 @@ void subSampleBam(std::string bamFile1, std::string bamFile2, std::string output
 	}
 	
 	// set seed for random number generator
-	srand(123)
+	srand(123);
 	
 	// begin to itrate through bam file and sub-sample
 	BamTools::BamAlignment al1;
 	BamTools::BamAlignment al2;
 	
-	double rescaledFrac = sampleFrace*100.0; 
+	double rescaledFrac = sampleFrac*100.0; 
 	while( reader1.GetNextAlignmentCore(al1)) 
 	{
 		reader2.GetNextAlignmentCore(al2);
