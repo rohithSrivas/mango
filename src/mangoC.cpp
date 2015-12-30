@@ -671,11 +671,11 @@ void subSampleBam(std::string bamFile1, std::string bamFile2, std::string output
 	// open BAM file for reading
 	BamTools::BamReader reader1;
 	BamTools::BamReader reader2;
-	if( !reader1.Open(bam1) ) {
+	if( !reader1.Open(bamFile1) ) {
 		std::cerr << "Could not open BAM file 1." << std::endl;
 		return;
 	}
-	if( !reader2.Open(bam2)) {
+	if( !reader2.Open(bamFile2)) {
 		std::cerr << "Could not open BAM file 2." << std::endl;
 	}
 	
@@ -700,7 +700,7 @@ void subSampleBam(std::string bamFile1, std::string bamFile2, std::string output
 	}
 	
 	// set seed for random number generator
-	stdlib::srand(123)
+	srand(123)
 	
 	// begin to itrate through bam file and sub-sample
 	BamTools::BamAlignment al1;
@@ -712,7 +712,7 @@ void subSampleBam(std::string bamFile1, std::string bamFile2, std::string output
 		reader2.GetNextAlignmentCore(al2);
 		
 		// sub sampling routine
-		int randNum = stdlib::rand() % 100+1;
+		int randNum = rand() % 100+1;
 		double randNumDouble = (double)randNum;
 		if(randNumDouble <= rescaledFrac) 
 		{
