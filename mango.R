@@ -817,11 +817,11 @@ if (6 %in% opt$stages)
 	numThreads				= as.numeric(opt["numThreads"])
 	downSample      		= as.numeric(opt["downsample_rate"])
 	
-	print ("assessing chip quality and producing signal track data")
+	print ("assessing chip quality")
 	
 	# generate file names
-    bam1 = ifelse(downSample<1.0,paste(outname ,"_1.same_downSampled_",downSample,".bam",sep=""),paste(outname ,"_1.same.bam",sep=""))
-    bam2 = ifelse(downSample<1.0,paste(outname ,"_2.same_downSampled_",downSample,".bam",sep=""),paste(outname ,"_2.same.bam",sep=""))
+    bam1 = ifelse(downSample<1.0,paste(outname ,"_1.same_downSampled_",downSample,".sorted.bam",sep=""),paste(outname ,"_1.same.sorted.bam",sep=""))
+    bam2 = ifelse(downSample<1.0,paste(outname ,"_2.same_downSampled_",downSample,".sorted.bam",sep=""),paste(outname ,"_2.same.sorted.bam",sep=""))
 	temp.merged.bam = paste(outname,"_tempMerged.bam",sep="") 
 	qual.results.file = paste(outname,"_chipQual_results.txt",sep="")
 	qual.results.plot.file = paste(outname,"_chipQual_plot.pdf",sep="")
@@ -884,7 +884,8 @@ if (7 %in% opt$stages)
 		mergeTwoBam(bam1,bam2,temp.merged.bam)
 	}
 	
-	# run the align2rawsignal 
+	# run the align2rawsignal
+	print ("generating signal track data") 
 	runAlign2RawSignal(	input.bam=temp.merged.bam,
 						output.mat.file=mat.file,
 						temp.filtered.bam=temp.filtered.bam,
@@ -898,6 +899,9 @@ if (7 %in% opt$stages)
 						chrDir=chrfastaDir,
 						mapDir=mappabilityDir,
 						verbose=TRUE)
+	
+	# delete temporary merged BAM file 
+	file.remove(temp.merged.bam)
 } 
 
 ##################################### Make Log file #####################################

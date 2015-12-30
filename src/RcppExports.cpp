@@ -79,6 +79,20 @@ BEGIN_RCPP
     return R_NilValue;
 END_RCPP
 }
+// subSampleBam
+void subSampleBam(std::string bamFile1, std::string bamFile2, std::string outputBamFile1, std::string outputBamFile2, double sampleFrac);
+RcppExport SEXP mango_subSampleBam(SEXP bamFile1SEXP, SEXP bamFile2SEXP, SEXP outputBamFile1SEXP, SEXP outputBamFile2SEXP, SEXP sampleFracSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope __rngScope;
+    Rcpp::traits::input_parameter< std::string >::type bamFile1(bamFile1SEXP);
+    Rcpp::traits::input_parameter< std::string >::type bamFile2(bamFile2SEXP);
+    Rcpp::traits::input_parameter< std::string >::type outputBamFile1(outputBamFile1SEXP);
+	Rcpp::traits::input_parameter< std::string >::type outputBamFile2(outputBamFile2SEXP);
+	Rcpp::traits::input_parameter< double >::type sampleFrac(sampleFracSEXP);
+    subSampleBam(bamFile1, bamFile2, outputBamFile1,outputBamFile2,sampleFrac);
+    return R_NilValue;
+END_RCPP
+}
 // buildBedpe
 void buildBedpe(std::string sam1, std::string sam2, std::string bedpefile);
 RcppExport SEXP mango_buildBedpe(SEXP sam1SEXP, SEXP sam2SEXP, SEXP bedpefileSEXP) {

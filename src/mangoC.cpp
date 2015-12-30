@@ -14,6 +14,7 @@ using namespace Rcpp;
 #include <sstream>
 #include <bitset>
 #include <map>
+#include <stdlib>	//added line
 #include "boost/iostreams/filtering_streambuf.hpp"
 #include "boost/iostreams/copy.hpp"
 #include "boost/iostreams/filter/gzip.hpp"
@@ -661,6 +662,69 @@ void buildBedpefromBam(std::string bam1, std::string bam2, std::string bedpefile
 	bedpefilestream.close();
 	reader1.Close();
 	reader2.Close();
+}
+
+// Define a function to sub-sample the two separate BAM files
+// [[Rcpp::export]]
+void subSampleBam(std::string bamFile1, std::string bamFile2, std::string outputBamFile1, std::string outputBamFile2, double sampleFrac)
+{
+	// open BAM file for reading
+	BamTools::BamReader reader1;
+	BamTools::BamReader reader2;
+	if( !reader1.Open(bam1) ) {
+		std::cerr << "Could not open BAM file 1." << std::endl;
+		return;
+	}
+	if( !reader2.Open(bam2)) {
+		std::cerr << "Could not open BAM file 2." << std::endl;
+	}
+	
+	// acquire information regarding the two input BAM files
+	const BamTools::SamHeader header1 = reader1.GetHeader();
+	const BamTools::RefVector references1 = reader1.GetReferenceData();
+	
+	const BamTools::SamHeader header2 = reader2.GetHeader();
+	const BamTools::RefVector references2 = reader2.GetReferenceData();
+	
+	// open sub-sampled output BAM files for writing
+	BamTools::BamWriter writer1;
+	if(!writer1.Open(outputBamFile1,header1,references1)) {
+		std::cerr << "Could not open output BAM file 1!" << endl;
+		return;
+	}
+	
+	BamTools::BamWriter writer2;
+	if(!writer1.Open(outputBamFile2,header2,references2)) {
+		std::cerr << "Could not open output BAM file 2!" << endl;
+		return;
+	}
+	
+	// set seed for random number generator
+	stdlib::srand(123)
+	
+	// begin to itrate through bam file and sub-sample
+	BamTools::BamAlignment al1;
+	BamTools::BamAlignment al2;
+	
+	double rescaledFrac = sampleFrace*100.0; 
+	while( reader1.GetNextAlignmentCore(al1)) 
+	{
+		reader2.GetNextAlignmentCore(al2);
+		
+		// sub sampling routine
+		int randNum = stdlib::rand() % 100+1;
+		double randNumDouble = (double)randNum;
+		if(randNumDouble <= rescaledFrac) 
+		{
+			writer1.SaveAlignment(al1);
+			writer2.SaveAlignment(al2);
+		}
+	}
+	
+	reader1.Close();
+	reader2.Close();
+	writer1.Close();
+	writer2.Close();
 }
 
 // Define a function that builds a bedpe file from 2 sam file
@@ -1409,7 +1473,6 @@ std::vector< std::string > removeDups(std::string bedpein,std::string outnamebas
   
   return(rmdupresults);
 }
-
 
 
 // Define a function splits bedpe file into reads and PETs by chromosome

@@ -29,8 +29,8 @@ mergeTwoBam <- function(inputBam1, inputBam2, outputBam) {
 	invisible(.Call('mango_mergeTwoBam', PACKAGE = 'mango', inputBam1, inputBam2, outputBam))
 }
 
-downSampleBam <- function(inputBam1, inputBam2, outputBam1, outputBam2, sampleRate) {
-	invisible(.Call('mango_downSampleBam', PACKAGE = 'mango', inputBam1, inputBam2, outputBam1, outputBam2, sampleRate))
+subSampleBam <- function(bamFile1, bamFile2, outputBamFile1, outputBamFile2, sampleFrac) {
+	invisible(.Call('mango_subSampleBam', PACKAGE = 'mango', bamFile1, bamFile2, outputBamFile1, outputBamFile2, sampleFrac))
 }
 
 findPairs <- function(overlapfile, petpairsfile, interactionfile, peakscount, peaksfileslopdepth) {
