@@ -46,7 +46,7 @@ runAlign2RawSignal <- function(	input.bam,
 							"-of=\"mat\" ",
 							"-n=5 ",
 							"-l=",fragLength," ",
-							"-mm=30",sep="")
+							"-mm=35",sep="")
  
 	 # execute command
 	 system(command.mat)
@@ -60,7 +60,7 @@ runAlign2RawSignal <- function(	input.bam,
 							"-of=\"bg\" ",
 							"-n=5 ",
 							"-l=",fragLength," ",
-							"-mm=30",sep="")
+							"-mm=35",sep="")
  
 	 # execute command
 	 system(command.bg)
