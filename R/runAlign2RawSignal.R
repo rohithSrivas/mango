@@ -14,6 +14,7 @@
 #' @param fragLength the average fragment length estimated from phantompeakqual toolkit
 #' @param chrDir path to directory containing individual chromsome fasta files
 #' @param mapDir path to directory containing mappability files
+#' @param ucsctoolspath path to ucsctools binary program bedgraphToBigWig
 #' @param verbose Flag to determine whether to output the executed commands to file
 #' @export
 #' 
@@ -29,29 +30,13 @@ runAlign2RawSignal <- function(	input.bam,
 								fragLength,
 								chrDir,
 								mapDir,
+								ucsctoolspath,
 								verbose=TRUE)
-{
-	
-	# setup environmental path variables command
-  	env.command <- paste(	"MCRROOT=",path.to.mcr,"\n",
-  							"LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${MCRROOT}/runtime/glnxa64\n",
-  							"LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${MCRROOT}/bin/glnxa64\n",
-							"LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${MCRROOT}/sys/os/glnxa64\n",
-							"MCRJRE=${MCRROOT}/sys/java/jre/glnxa64/jre/lib/amd64\n",
-							"LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${MCRJRE}/native_threads\n",
-							"LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${MCRJRE}/server\n",
-							"LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${MCRJRE}\n",
-							"XAPPLRESDIR=${MCRROOT}/X11/app-defaults\n",
-							"export LD_LIBRARY_PATH\n",
-							"export XAPPLRESDIR\n",
-							"export MCR_CACHE_ROOT=",tempdir(),"\n",sep="")
-	system(env.command)
-	
-	
+{	
 	# run the filter command
-	command.filter <- paste(path.to.bamutils,"filter",inputBamFile,temp.filtered.bam+" -minlen 20 -maxlen 101 -mapped")
+	command.filter <- paste(path.to.bamutils,"filter",input.bam,temp.filtered.bam," -minlen 20 -maxlen 101 -mapped")
 	system(command.filter)
-	
+
 	# setup actual run command
 	command.mat <- paste(	path.to.align2rawsignal,
 							" -i=\"",temp.filtered.bam,"\" ",
@@ -61,38 +46,36 @@ runAlign2RawSignal <- function(	input.bam,
 							"-of=\"mat\" ",
 							"-n=5 ",
 							"-l=",fragLength," ",
-							"-mm=35",sep="")
-	 
+							"-mm=30",sep="")
+ 
 	 # execute command
 	 system(command.mat)
-	 
+ 
 	 # setup actual run command
 	 command.bg <- paste(	path.to.align2rawsignal,
- 							" -i=\"",temp.filtered.bam,"\" ",
- 							"-s=\""+chrDir+"\" ",
- 							"-u=\""+mapDir+"\" ",
- 							"-o=\""+temp.output.bedgraph.file+"\" ",
- 							"-of=\"bg\" ",
- 							"-n=5 ",
- 							"-l=",fragLength," ",
- 							"-mm=35",sep="")
-	 
- 	 # execute command
- 	 system(command.bg)
-	 
+							" -i=\"",temp.filtered.bam,"\" ",
+							"-s=\"",chrDir,"\" ",
+							"-u=\"",mapDir,"\" ",
+							"-o=\"",temp.output.bedgraph.file,"\" ",
+							"-of=\"bg\" ",
+							"-n=5 ",
+							"-l=",fragLength," ",
+							"-mm=30",sep="")
+ 
+	 # execute command
+	 system(command.bg)
+ 
 	 #convert bedgraph to bigWig file
-	 command.bw <- paste("bedGraphToBigWig ",temp.output.bedgraph.file," ",bedtoolsgenome," ",output.bw.file,sep="")
+	 command.bw <- paste(ucsctoolspath," ",temp.output.bedgraph.file," ",bedtoolsgenome," ",output.bw.file,sep="")
 	 system(command.bw)
-	 
+ 
 	 #clean up by removing temporary bedgraph file
 	 file.remove(temp.output.bedgraph.file)
-	 file.remove(temp.filtered.bam)
-	 
+ 
 	 #print all commands invoked to file if requested
-  	 # print command invoked
+	 # print command invoked
 	 if(verbose) {
 		 print("Commands issued for generating signal track :: ")
-		 print(env.command)
 		 print(command.filter)
 		 print(command.mat)
 		 print(command.bg)

@@ -2,7 +2,7 @@
 \alias{runAlign2RawSignal}
 \title{Produce signal track data using align2rawsignal}
 \usage{
-runAlign2RawSignal(input.bam,temp.filtered.bam,path.to.bamutils,output.mat.file,temp.output.bedgraph.file,output.bw.file,path.to.mcr,path.to.align2rawsignal,bedtoolsgenome,fragLength,chrDir,mapDir,verbose)
+runAlign2RawSignal(input.bam,temp.filtered.bam,path.to.bamutils,output.mat.file,temp.output.bedgraph.file,output.bw.file,path.to.mcr,path.to.align2rawsignal,bedtoolsgenome,fragLength,chrDir,mapDir,ucsctoolspath,verbose)
 }
 \arguments{
   \item{input.bam}{full path to input bam file}
@@ -28,6 +28,8 @@ runAlign2RawSignal(input.bam,temp.filtered.bam,path.to.bamutils,output.mat.file,
   \item{chrDir}{path to directory containing individual chromsome fasta files}
   
   \item{mapDir}{path to directory containing mappability files}
+  
+  \item{ucsctoolspath}{path to ucsctools binary program bedgraphToBigWig}
   
   \item{verbose}{Flag to determine whether to output the executed commands to file}
 }
