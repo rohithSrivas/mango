@@ -1,7 +1,8 @@
 callInteractions_wrapper <- function(	outname,
+										bedtoolsgenome,
+										bedtoolspath=NULL,
 										distcutrangemin=1000,
 										distcutrangemax=100000,
-										bedtoolsgenome,
 										biascut=0.05,
 										maxinteractingdist=1000000,
 										numofbins=50,
@@ -14,7 +15,7 @@ callInteractions_wrapper <- function(	outname,
 										MHT="all",
 										extendreads=120,
 										verboseoutput=FALSE,
-										saveRoutput)
+										saveRoutput=TRUE)
 {
 	#Step 1: Establish various filenames required
     tagAlignfile       	= paste(outname,".tagAlign",sep="")
@@ -30,6 +31,11 @@ callInteractions_wrapper <- function(	outname,
     allpairsfile       	= paste(outname ,".interactions.all.mango",sep="")
     fdrpairsfile       	= paste(outname ,".interactions.fdr.mango",sep="")
 	routputfile			= paste(outname,".allInfo.Rdata",sep="")
+	
+	#Step 1.5: If bedtoolspath is not provided auotmagically find from path
+	if(is.null(bedtoolspath)){
+		bedtoolspath  = DefinePaths(c("bedtools"))
+	}
 	
 	#Step 2: Count number of reads per peak; this performs the following operations
 	#	(1) Extend reads 'extendreads' length on 3' end.
@@ -125,7 +131,8 @@ callInteractions_wrapper <- function(	outname,
 	#	(3) Utilize the binomial distribution to calculate probability of observing "X or more" PETS at each peak pair (p-value)
 	#	(4) Remove peak pairs achieving extraordinary significance (i.e., beats Bonferroni correction)
 	#	(5) Repeat Steps 1-3 to re-derive probabilities after removing "most likely" interactions
-    for (reps in (1:2))
+    totalcombos = 0
+	for (reps in (1:2))
     {
       #--------------- Distance Normalization ---------------#
     
@@ -313,8 +320,11 @@ callInteractions_wrapper <- function(	outname,
 	{
 		print("saving all relevant data in R dataformat.")
 		save(	putpairs,
-				distance_IAB_model,distance_combo_model,
-				depth_IAB_model,depth_combo_model,
+				distance_IAB_model,distance_IAB_spline,
+				distance_combo_model,distance_combo_spline,
+				depth_IAB_model,depth_IAB_spline,
+				depth_combo_model,depth_combo_spline,
+				
 				file=routputfile)
 		
 	}
