@@ -1,11 +1,19 @@
 callPeaks.wrapper <- function(	bedtoolsgenome,
 								outname,
+								macs2path=NULL,
 								MACS_qvalue=0.05,
 								peakslop=500,
-								peakinput,
-								MACS_shiftsize=NULL,
-								blacklist)
+								peakinput="NULL",
+								MACS_shiftsize="NULL",
+								blacklist="NULL")
 {
+	#Step 0: Get the macs2path
+	if(is.null(macs2path)) {
+		progs = c("macs2")
+		Paths = DefinePaths(progs = progs)
+		macs2path = Paths[1]
+	}
+	
 	#Step 1: Setup and establish filenames
     bedpefilesortrmdup = paste(outname ,".rmdup.bedpe",sep="")
     tagAlignfile       = paste(outname,".tagAlign",sep="")
@@ -36,11 +44,11 @@ callPeaks.wrapper <- function(	bedtoolsgenome,
 	#	(3) Remove peaks overlapping with regions in the blacklist file
 	print ("extending peaks")
     peakcounts = extendpeaks(	peaksfile=peaksfile,
-  	  						peaksfileslop=peaksfileslop,
-  							bedtoolspath=bedtoolspath,
-               			   	bedtoolsgenome=bedtoolsgenome,
-  							peakslop=peakslop,
-  							blacklist=blacklist)
+  	  							peaksfileslop=peaksfileslop,
+  								bedtoolspath=bedtoolspath,
+               			   		bedtoolsgenome=bedtoolsgenome,
+  								peakslop=peakslop,
+  								blacklist=blacklist)
 	
 	return(peakcounts)
 }

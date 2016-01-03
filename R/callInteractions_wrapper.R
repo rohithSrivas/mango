@@ -8,7 +8,7 @@ callInteractions_wrapper <- function(	outname,
 										numofbins=50,
 										FDR=0.05,
 										minPETS=2,
-										chrominclude=NULL,
+										chrominclude="NULL",
 										chromexclude="chrM,chrY",
 										reportallpairs=TRUE,
 										corrMethod="BH",
@@ -93,7 +93,10 @@ callInteractions_wrapper <- function(	outname,
                              bedtoolsgenome = bedtoolsgenome,
                              extendreads=extendreads,peaksfileslopdepth=peaksfileslopdepth,
                              verbose=FALSE)
-							 
+     
+	 # filter out unwanted chromosomes
+     originalchroms = chromosomes
+					 
 	#Step 4.2: Keep peak pairs located on "chrominclude" and remove peak pairs located on "chromexclude"
     bedtoolsgenomeinfo = read.table(bedtoolsgenome,header=FALSE,sep="\t")
     chromosomes = bedtoolsgenomeinfo[,1]
@@ -325,7 +328,7 @@ callInteractions_wrapper <- function(	outname,
 				distance_combo_model,distance_combo_spline,
 				depth_IAB_model,depth_IAB_spline,
 				depth_combo_model,depth_combo_spline,
-				
+				totalcombos,
 				file=routputfile)
 		
 	}
