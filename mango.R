@@ -80,14 +80,7 @@ option_list <- list(
   make_option(c("--MHT"),  default="all",help="How should mutliple hypothsesis testing be done?  Correct for 'all' possible pairs of loci or only those 'found' with at least 1 PET"),
   
   #---------- STAGE 6 PARAMETERS ----------#
-  make_option(c("--sppScriptFile"),	default="NULL",help="location of phantompeakqual tools R script"),
-  
-  #---------- STAGE 7 PARAMETERS ----------#
-  make_option(c("--mcrPath"),	default="NULL",help="full path to MCR v17 installed toolkit"), 
-  make_option(c("--align2rawsignalpath"),	default="NULL",help="full path to align2rawsignal program"),
-  make_option(c("--chrfastaDir"),	default="NULL",help="path to directory containing individual chromosome fasta files"),
-  make_option(c("--fragLength"),	default="200",help="estimated mean insert size"),
-  make_option(c("--mappabilityDir"),	default="NULL",help="path to directory containing mappability tracks")
+  make_option(c("--sppScriptFile"),	default="NULL",help="location of phantompeakqual tools R script")
   
 )
 
@@ -98,15 +91,14 @@ opt <- parse_args(OptionParser(option_list=option_list))
 # check dependencies
 
 # first look in PATH
-progs = c("bedtools","macs2","bowtie","samtools","bedGraphToBigWig","DownsampleSam.jar","bamutils")
+progs = c("bedtools","macs2","bowtie","samtools","bedGraphToBigWig","bamutils")
 Paths = DefinePaths(progs = progs)
 bedtoolspath  = Paths[1]
 macs2path     = Paths[2]
 bowtiepath    = Paths[3]
 samtoolspath  = Paths[4]
 ucsctoolspath = Paths[5]
-picardtoolspath = Paths[6]
-bamutilspath = Paths[7]
+bamutilspath = Paths[6]
 
 # next, look in arguments
 if (opt["bedtoolspath"] != "NULL")
@@ -335,8 +327,8 @@ if (2 %in% opt$stages)
 	  bam2.ds.sorted = 	paste(outname ,"_2.same.downSampled_",downSample,".sorted.bam",sep="")
 	  
 	  #Down sample
-	  downSampleBam(bam1,bam1.ds,downSample,verbose=TRUE)
-	  downSampleBam(bam2,bam2.ds,downSample,verbose=TRUE)
+	  subSampleBam(bam1,bam1.ds,downSample,verbose=TRUE)
+	  subSampleBam(bam2,bam2.ds,downSample,verbose=TRUE)
 	  
 	  #Sort by name
 	  sortBAM(bamInputFile=bam1.ds,bamOutputFile=bam1.ds.sorted,samtools=samtoolspath,by.name=TRUE,num.threads=numThreads,verbose=TRUE)
@@ -848,61 +840,6 @@ if (6 %in% opt$stages)
 	opt["fragLength"] = frag.length
 					
 }
-
-
-############################### produce signal track data ###############################
-
-if (7 %in% opt$stages)
-{
-	checkRequired(opt,c("align2rawsignalpath"))
-	checkRequired(opt,c("chrfastaDir"))
-	checkRequired(opt,c("mappabilityDir"))
-	checkRequired(opt,c("mcrPath"))
-	checkRequired(opt,c("bedtoolsgenome"))
-	
-	# gather arguments
-	align2rawsignalpath 	= as.character(opt["align2rawsignalpath"])
-	chrfastaDir				= as.character(opt["chrfastaDir"])
-	mappabilityDir			= as.character(opt["mappabilityDir"])
-	mcrPath					= as.character(opt["mcrPath"])
-	bedtoolsgenome			= as.character(opt["bedtoolsgenome"])
-	frag.length				= as.numeric(opt["fragLength"])
-	
-	# generate file names
-    bam1 = ifelse(downSample<1.0,paste(outname ,"_1.same_downSampled_",downSample,".bam",sep=""),paste(outname ,"_1.same.bam",sep=""))
-    bam2 = ifelse(downSample<1.0,paste(outname ,"_2.same_downSampled_",downSample,".bam",sep=""),paste(outname ,"_2.same.bam",sep=""))
-	temp.merged.bam = paste(outname,"_tempMerged.bam",sep="") 
-	mat.file = paste(outname,"_signalTrack_MAT.mat",sep="")
-	temp.bedgraph = paste(outname,"_temp.bedGraph",sep="")
-	bw.file = paste(outname,"_signalTrack.bw",sep="")
-	temp.filtered.bam = paste(outname,"_tempFiltered.bam",sep="")
-	
-	# merge bam files temporarily
-	if(!file.exists(temp.merged.bam))
-	{
-		print ("merging bam files temporarily")
-		mergeTwoBam(bam1,bam2,temp.merged.bam)
-	}
-	
-	# run the align2rawsignal
-	print ("generating signal track data") 
-	runAlign2RawSignal(	input.bam=temp.merged.bam,
-						output.mat.file=mat.file,
-						temp.filtered.bam=temp.filtered.bam,
-						path.to.bamutils=bamutilspath,
-						temp.output.bedgraph.file=temp.bedgraph,
-						output.bw.file=bw.file,
-						path.to.mcr=mcrPath,
-						path.to.align2rawsignal=align2rawsignalpath,
-						bedtoolsgenome=bedtoolsgenome,
-						fragLength=frag.length,
-						chrDir=chrfastaDir,
-						mapDir=mappabilityDir,
-						verbose=TRUE)
-	
-	# delete temporary merged BAM file 
-	file.remove(temp.merged.bam)
-} 
 
 ##################################### Make Log file #####################################
 
