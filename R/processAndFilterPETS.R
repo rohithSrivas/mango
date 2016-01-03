@@ -1,5 +1,5 @@
 processAndFilterPETS <- function(	outname,
-									downSample)
+									downSample=1.0)
 {
 	#Step 1: Set various filenames
     bedpefile          = paste(outname ,".bedpe",sep="")

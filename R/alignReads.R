@@ -2,14 +2,16 @@ alignReads <- function(	outname,
 						bowtieref,
 						shortreads,
 						numThreads,
-						fastq1,
-						fastq2,
-						bam1,
-						bam2,
-						bam1.sorted,
-						bam2.sorted,
-						downSample)
+						downSample=1.0)
 {
+	#Step 0: Set various filenames
+    fastq1 = 			paste(outname ,"_1.same.fastq",sep="")
+    fastq2 = 			paste(outname ,"_2.same.fastq",sep="")
+    bam1   = 			paste(outname ,"_1.same.bam",sep="")
+    bam2   = 			paste(outname ,"_2.same.bam",sep="")
+    bam1.sorted = 		paste(outname ,"_1.same.sorted.bam",sep="")
+    bam2.sorted = 		paste(outname ,"_2.same.sorted.bam",sep="")
+	
 	#Step 1: Align each FASTQ file separately
 	print ("aligning reads")
     count1 <- alignBowtie(fastq=fastq1,output=bam1,bowtiepath=bowtiepath,bowtieref=bowtieref,samtoolspath=samtoolspath,shortreads,num.threads=numThreads)
@@ -46,10 +48,10 @@ alignReads <- function(	outname,
 	}
 	
 	#Step 4: Perform clean-up
-	file.remove(fastq1)
-	file.remove(fastq2)
-	file.remove(bam1)
-	file.remove(bam2)
+	if(file.exists(fastq1)) {file.remove(fastq1)}
+	if(file.exists(fastq2)) {file.remove(fastq2)}
+	if(file.exists(bam1)) {file.remove(bam1)}
+	if(file.exists(bam2)) {file.remove(bam2)}
 	
 	return(c(count1,count2))
 }

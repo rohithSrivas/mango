@@ -1,9 +1,9 @@
 callPeaks.wrapper <- function(	bedtoolsgenome,
 								outname,
-								MACS_qvalue,
-								peakslop,
+								MACS_qvalue=0.05,
+								peakslop=500,
 								peakinput,
-								MACS_shiftsize,
+								MACS_shiftsize=NULL,
 								blacklist)
 {
 	#Step 1: Setup and establish filenames
