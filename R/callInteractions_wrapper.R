@@ -43,8 +43,9 @@ callInteractions_wrapper <- function(	outname,
 	#	(3) Convert this intersect file to a peak depth file, i.e., peak location<tab>peak name<tab># of reads
     if (file.exists(tagAlignfileExt) ==TRUE){file.remove(tagAlignfileExt)}
     if (file.exists(temppeakoverlap) ==TRUE){file.remove(temppeakoverlap)}
-    DeterminePeakDepths(bedtools=bedtoolspath,bedtoolsgenome=bedtoolsgenome,extendreads=extendreads,tagAlignfile=tagAlignfile,
-                    tagAlignfileExt=tagAlignfileExt,peaksfileslop=peaksfileslop,temppeakoverlap=temppeakoverlap)
+    DeterminePeakDepths(	bedtools=bedtoolspath,bedtoolsgenome=bedtoolsgenome,extendreads=extendreads,tagAlignfile=tagAlignfile,
+                    		tagAlignfileExt=tagAlignfileExt,peaksfileslop=peaksfileslop,temppeakoverlap=temppeakoverlap,
+							peaksfileslopdepth=peaksfileslopdepth)
     if (file.exists(tagAlignfileExt) ==TRUE){file.remove(tagAlignfileExt)}
     if (file.exists(temppeakoverlap) ==TRUE){file.remove(temppeakoverlap)}
 		
