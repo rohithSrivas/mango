@@ -5,7 +5,7 @@ parseFASTQs <- function(	fastq1,
 							maxlength,
 							keepempty,
 							linker1,
-							linker2,)
+							linker2)
 {
 	#Step 1: Check if file is zipped or not
     is.fastq1.zipped <- any(str_detect(fastq1,c("\\.gz","\\.gzip")))
