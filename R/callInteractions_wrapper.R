@@ -34,7 +34,7 @@ callInteractions_wrapper <- function(	outname,
 	
 	#Step 1.5: If bedtoolspath is not provided auotmagically find from path
 	if(is.null(bedtoolspath)){
-		bedtoolspath  = DefinePaths(c("bedtools"))
+		bedtoolspath  = DefinePaths(c("bedtools"))[1]
 	}
 	
 	#Step 2: Count number of reads per peak; this performs the following operations
