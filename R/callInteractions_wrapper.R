@@ -24,7 +24,7 @@ callInteractions_wrapper <- function(	outname,
     peaksfile          	= paste(outname ,"_peaks.narrowPeak",sep="")
     peaksfileslop      	= paste(outname ,"_peaks.slopPeak",sep="")
     peaksfileslopdepth 	= paste(outname ,"_peaks.slopPeak.depth",sep="")
-    bedpefilesortrmdup 	= paste(outname ,".rmdup.bedpe",sep="")
+    bedpefilesortrmdup 	= paste(outname ,".rmdup.bedpe",sep="") 
     distancefile       	= paste(outname ,".distance",sep="")
     distancecutpdf     	= paste(outname ,".distance.pdf",sep="")
     modelspdf          	= paste(outname ,".models.pdf",sep="")

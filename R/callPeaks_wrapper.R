@@ -1,6 +1,7 @@
 callPeaks.wrapper <- function(	bedtoolsgenome,
 								outname,
 								macs2path=NULL,
+								bedtoolspath=NULL,
 								MACS_qvalue=0.05,
 								peakslop=500,
 								peakinput="NULL",
@@ -12,6 +13,12 @@ callPeaks.wrapper <- function(	bedtoolsgenome,
 		progs = c("macs2")
 		Paths = DefinePaths(progs = progs)
 		macs2path = Paths[1]
+	}
+	
+	if(is.null(bedtoolspath)) {
+		progs = c("bedtools")
+		Paths = DefinePaths(progs = progs)
+		bedtoolspath = Paths[1]
 	}
 	
 	#Step 1: Setup and establish filenames
