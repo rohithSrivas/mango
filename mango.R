@@ -505,7 +505,7 @@ if (5 %in% opt$stages)
   if (file.exists(tagAlignfileExt) ==TRUE){file.remove(tagAlignfileExt)}
   if (file.exists(temppeakoverlap) ==TRUE){file.remove(temppeakoverlap)}
   DeterminePeakDepths(bedtools=bedtoolspath,bedtoolsgenome=bedtoolsgenome,extendreads=extendreads,tagAlignfile=tagAlignfile,
-                  tagAlignfileExt=tagAlignfileExt,peaksfileslop=peaksfileslop,temppeakoverlap=temppeakoverlap)
+                  tagAlignfileExt=tagAlignfileExt,peaksfileslop=peaksfileslop,temppeakoverlap=temppeakoverlap,peaksfileslopdepth=peaksfileslopdepth)
   if (file.exists(tagAlignfileExt) ==TRUE){file.remove(tagAlignfileExt)}
   if (file.exists(temppeakoverlap) ==TRUE){file.remove(temppeakoverlap)}
   
