@@ -91,14 +91,13 @@ opt <- parse_args(OptionParser(option_list=option_list))
 # check dependencies
 
 # first look in PATH
-progs = c("bedtools","macs2","bowtie","samtools","bedGraphToBigWig","bamutils")
+progs = c("bedtools","macs2","bowtie","samtools")
 Paths = DefinePaths(progs = progs)
 bedtoolspath  = Paths[1]
 macs2path     = Paths[2]
 bowtiepath    = Paths[3]
 samtoolspath  = Paths[4]
-ucsctoolspath = Paths[5]
-bamutilspath = Paths[6]
+
 
 # next, look in arguments
 if (opt["bedtoolspath"] != "NULL")
@@ -117,18 +116,6 @@ if( opt["samtoolspath"] != "NULL")
 {
 	samtoolspath = opt["samtoolspath"]
 }
-if( opt["ucsctoolspath"] != "NULL")
-{
-	ucsctoolspath = opt["ucsctoolspath"]
-}
-if( opt["picardtoolspath"] != "NULL")
-{
-	picardtoolspath = opt["picardtoolspath"]
-}
-if( opt["bamutilspath"] != "NULL")
-{
-	bamutilspath = opt["bamutilspath"]
-}
 
 # get software versions
 bedtoolsversion  	= system(paste(bedtoolspath,"--version"),intern=TRUE)[1]
@@ -137,7 +124,7 @@ bowtieversion    	= system(paste(bowtiepath,"--version"),intern=TRUE)[1]
 samtoolsversion  	= system(paste(samtoolspath,"--version-only"),intern=TRUE)[1] 
 
 # break if dependencies not found
-Paths = c(bedtoolspath,macs2path,bowtiepath,samtoolspath,ucsctoolspath,picardtoolspath,bamutilspath)
+Paths = c(bedtoolspath,macs2path,bowtiepath,samtoolspath)
 i = 0
 pathsOK = T
 for (p in Paths)
