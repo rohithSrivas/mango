@@ -858,9 +858,9 @@ Rcpp::NumericMatrix getRawInterChromCounts(std::string bedpefile_nodup)
 	chr2row["chr9"] = 8; chr2row["chr10"] = 9; chr2row["chr11"] = 10; chr2row["chr12"] = 11;
 	chr2row["chr13"] = 12; chr2row["chr14"] = 13; chr2row["chr15"] = 14; chr2row["chr16"] = 15;
 	chr2row["chr17"] = 16; chr2row["chr18"] = 17; chr2row["chr19"] = 18; chr2row["chr20"] = 19;
-	chr2row["chr21"] = 20; chr2row["chrX"] = 21;
+	chr2row["chr21"] = 20; chr2row["chr22"] = 21; chr2row["chrX"] = 22;
 	
-	Rcpp::NumericMatrix out(22,22);
+	Rcpp::NumericMatrix out(23,23);
 	
 	//Begin to iterate through file
 	ifstream file1(bedpefile_nodup.c_str());
@@ -872,15 +872,19 @@ Rcpp::NumericMatrix getRawInterChromCounts(std::string bedpefile_nodup)
 	  std::string chrom1 = fields[0];
 	  std::string chrom2 = fields[3];
 	  
-      if ((chrom1 == "*") | (chrom2 == "*") | (chrom1==chrom2))
+      // only count interchromosmal contacts
+	  if ((chrom1 == "*") | (chrom2 == "*") | (chrom1==chrom2))
       {
         continue;
       }
 	  
-	  int i=chr2row[chrom1]; int j=chr2row[chrom2];
-	  if(i==j) {
-		  std::cerr << line << std::endl;
+	  //disregard any chromosome not mentioned above
+	  if(chr2row.find(chrom1)==chr2row.end() | chr2row.find(chrom2)==chr2row.end())
+	  {
+		  continue;
 	  }
+	  
+	  int i=chr2row[chrom1]; int j=chr2row[chrom2];
 	  
 	  out(i,j)=out(i,j)+1;
 	  out(j,i)=out(j,i)+1;
@@ -900,7 +904,7 @@ Rcpp::NumericMatrix getNormInterChromCounts(std::string bedpefile_nodup)
 	chr2row["chr9"] = 8; chr2row["chr10"] = 9; chr2row["chr11"] = 10; chr2row["chr12"] = 11;
 	chr2row["chr13"] = 12; chr2row["chr14"] = 13; chr2row["chr15"] = 14; chr2row["chr16"] = 15;
 	chr2row["chr17"] = 16; chr2row["chr18"] = 17; chr2row["chr19"] = 18; chr2row["chr20"] = 19;
-	chr2row["chr21"] = 20; chr2row["chrX"] = 21;
+	chr2row["chr21"] = 20; chr2row["chr22"] = 21; chr2row["chrX"] = 22;
 	
 	/**std::map<int,std::string> row2chr;
 	chr2row[0] = "chr1"; chr2row[1] = "chr2"; chr2row[2] = "chr3"; chr2row[3] = "chr4";
@@ -910,10 +914,10 @@ Rcpp::NumericMatrix getNormInterChromCounts(std::string bedpefile_nodup)
 	chr2row[16] = "chr17"; chr2row[17] = "chr18"; chr2row[18] = "chr19"; chr2row[19] = "chr20";
 	chr2row[20] = "chr21"; chr2row[21] = "chrX";**/
 	
-	Rcpp::NumericMatrix out(22,22);
+	Rcpp::NumericMatrix out(23,23);
 	double totPets = 0.0;
 	
-	double totPetsChrom[22] ={0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0};
+	double totPetsChrom[22] ={0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0};
 	
 	//Begin to iterate through file
 	ifstream file1(bedpefile_nodup.c_str());
@@ -943,14 +947,14 @@ Rcpp::NumericMatrix getNormInterChromCounts(std::string bedpefile_nodup)
 	
 	// get probabilities for each chromosome
 	int i,j;
-	for(i=0; i<22; i++) {
+	for(i=0; i<23; i++) {
 		totPetsChrom[i] = totPetsChrom[i]/totPets;
 	}
 	
 	// normalize by expected inter-chromosomal counts
-	for(i=0; i<22; i++) 
+	for(i=0; i<23; i++) 
 	{
-		for(j=0; j<22; j++) 
+		for(j=0; j<23; j++) 
 		{
 			double expectedVal = totPets*totPetsChrom[i]*totPetsChrom[j];
 			out(i,j) = out(i,j)/expectedVal;
