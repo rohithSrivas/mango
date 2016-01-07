@@ -21,8 +21,7 @@ using namespace Rcpp;
 #include "api/BamReader.h"
 #include "api/BamMultiReader.h"
 #include "api/BamWriter.h"
-#include "boost/numeric/ublas/matrix.hpp"
-#include "boost/numeric/ublas/io.hpp"
+
 using namespace std;
 
 
