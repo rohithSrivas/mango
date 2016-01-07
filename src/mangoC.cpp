@@ -906,14 +906,6 @@ Rcpp::NumericMatrix getNormInterChromCounts(std::string bedpefile_nodup)
 	chr2row["chr17"] = 16; chr2row["chr18"] = 17; chr2row["chr19"] = 18; chr2row["chr20"] = 19;
 	chr2row["chr21"] = 20; chr2row["chr22"] = 21; chr2row["chrX"] = 22;
 	
-	/**std::map<int,std::string> row2chr;
-	chr2row[0] = "chr1"; chr2row[1] = "chr2"; chr2row[2] = "chr3"; chr2row[3] = "chr4";
-	chr2row[4] = "chr5"; chr2row[5] = "chr6"; chr2row[6] = "chr6"; chr2row[7] = "chr7";
-	chr2row[8] = "chr9"; chr2row[9] = "chr10"; chr2row[10] = "chr11"; chr2row[11] = "chr12";
-	chr2row[12] = "chr13"; chr2row[13] = "chr14"; chr2row[14] = "chr15"; chr2row[15] = "chr16";
-	chr2row[16] = "chr17"; chr2row[17] = "chr18"; chr2row[18] = "chr19"; chr2row[19] = "chr20";
-	chr2row[20] = "chr21"; chr2row[21] = "chrX";**/
-	
 	Rcpp::NumericMatrix out(23,23);
 	double totPets = 0.0;
 	
@@ -934,15 +926,24 @@ Rcpp::NumericMatrix getNormInterChromCounts(std::string bedpefile_nodup)
         continue;
       }
 	  
-	  // tabulate actual counts
+	  //track global pet counts (this will include counts to chromosomes we must not care about; but not interchromosomal counts)
+	  totPets=totPets+1.0;
+	  
+	  //disregard any chromosome not mentioned above
+	  if(chr2row.find(chrom1)==chr2row.end() | chr2row.find(chrom2)==chr2row.end())
+	  {
+		  continue;
+	  }
+	  
+	  //tabulate interchoromosomal counts for only pairs we care about
+	  totPetsChrom[chr2row[chrom1]] =totPetsChrom[chr2row[chrom1]]+1;
+	  totPetsChrom[chr2row[chrom2]] =totPetsChrom[chr2row[chrom2]]+1;
+	  
+	  // tabulate actual counts for chromosomes we only care about
 	  int i=chr2row[chrom1]; int j=chr2row[chrom2];
 	  out(i,j)=out(i,j)+1;
 	  out(j,i)=out(j,i)+1;
 	  
-	  //track global pet counts and chromosome specific counts
-	  totPets=totPets+1.0;
-	  totPetsChrom[chr2row[chrom1]] =totPetsChrom[chr2row[chrom1]]+1;
-	  totPetsChrom[chr2row[chrom2]] =totPetsChrom[chr2row[chrom2]]+1;
   	}
 	
 	// get probabilities for each chromosome
