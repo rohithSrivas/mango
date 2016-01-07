@@ -872,7 +872,7 @@ Rcpp::NumericMatrix getRawInterChromCounts(std::string bedpefile_nodup)
 	  std::string chrom1 = fields[0];
 	  std::string chrom2 = fields[3];
 	  
-      if ((chrom1 == "*") | (chrom2 == "*"))
+      if ((chrom1 == "*") | (chrom2 == "*") | (chrom1==chrom2))
       {
         continue;
       }
