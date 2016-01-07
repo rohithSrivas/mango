@@ -878,6 +878,10 @@ Rcpp::NumericMatrix getRawInterChromCounts(std::string bedpefile_nodup)
       }
 	  
 	  int i=chr2row[chrom1]; int j=chr2row[chrom2];
+	  if(i==j) {
+		  std::cerr << line << std::endl;
+	  }
+	  
 	  out(i,j)=out(i,j)+1;
 	  out(j,i)=out(j,i)+1;
   	}
