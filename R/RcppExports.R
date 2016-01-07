@@ -33,6 +33,14 @@ subSampleBam <- function(bamFile1, bamFile2, outputBamFile1, outputBamFile2, sam
 	invisible(.Call('mango_subSampleBam', PACKAGE = 'mango', bamFile1, bamFile2, outputBamFile1, outputBamFile2, sampleFrac))
 }
 
+getRawInterChromCounts <- function(bedpefile_nodup) {
+	invisible(.Call('mango_getRawInterChromCounts', PACKAGE='mango',bedpefile_nodup))
+}
+
+getNormInterChromCounts <- function(bedpefile_nodup) {
+	invisible(.Call('mango_getNormInterChromCounts', PACKAGE='mango',bedpefile_nodup))
+}
+
 findPairs <- function(overlapfile, petpairsfile, interactionfile, peakscount, peaksfileslopdepth) {
     invisible(.Call('mango_findPairs', PACKAGE = 'mango', overlapfile, petpairsfile, interactionfile, peakscount, peaksfileslopdepth))
 }

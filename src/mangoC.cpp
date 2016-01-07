@@ -21,6 +21,8 @@ using namespace Rcpp;
 #include "api/BamReader.h"
 #include "api/BamMultiReader.h"
 #include "api/BamWriter.h"
+#include "boost/numeric/ublas/matrix.hpp"
+#include "boost/numeric/ublas/io.hpp"
 using namespace std;
 
 
@@ -844,6 +846,114 @@ void buildBedpe(std::string sam1, std::string sam2,std::string bedpefile)
             bedpefilestream << "\n";
         }
     }
+}
+
+// Define a function that build a inter-chromosomal contact matrix from a bedpefile
+// [[Rcpp::export]]
+Rcpp::NumericMatrix getRawInterChromCounts(std::string bedpefile_nodup)
+{
+	//Instantiate map and matrix
+	std::map<std::string,int> chr2row;
+	chr2row["chr1"] = 0; chr2row["chr2"] = 1; chr2row["chr3"] = 2; chr2row["chr4"] = 3;
+	chr2row["chr5"] = 4; chr2row["chr6"] = 5; chr2row["chr7"] = 6; chr2row["chr8"] = 7;
+	chr2row["chr9"] = 8; chr2row["chr10"] = 9; chr2row["chr11"] = 10; chr2row["chr12"] = 11;
+	chr2row["chr13"] = 12; chr2row["chr14"] = 13; chr2row["chr15"] = 14; chr2row["chr16"] = 15;
+	chr2row["chr17"] = 16; chr2row["chr18"] = 17; chr2row["chr19"] = 18; chr2row["chr20"] = 19;
+	chr2row["chr21"] = 20; chr2row["chrX"] = 21;
+	
+	Rcpp::NumericMatrix out(22,22);
+	
+	//Begin to iterate through file
+	ifstream file1(bedpefile_nodup.c_str());
+    while (getline(file1, line))
+    {
+      // split lines and determine bin
+      std::vector<std::string> fields = string_split(line,"\t");
+	  std::string chrom1 = fields[0];
+	  std::string chrom2 = fields[3];
+	  
+      if ((chrom1 == "*") | (chrom2 == "*"))
+      {
+        continue;
+      }
+	  
+	  int i=chr2row[chrom1]; int j=chr2row[chrom2];
+	  out(i,j)=out(i,j)+1;
+	  out(j,i)=out(j,i)+1;
+  	}
+	
+	return out;
+}
+
+// Define a function that builds a normalized inter-chromosomal contact matrix from a bedpefile
+// [[Rcpp::export]]
+Rcpp::NumericMatrix getNormInterChromCounts(std::string bedpefile_nodup)
+{
+	//Instantiate map and matrix
+	std::map<std::string,int> chr2row;
+	chr2row["chr1"] = 0; chr2row["chr2"] = 1; chr2row["chr3"] = 2; chr2row["chr4"] = 3;
+	chr2row["chr5"] = 4; chr2row["chr6"] = 5; chr2row["chr7"] = 6; chr2row["chr8"] = 7;
+	chr2row["chr9"] = 8; chr2row["chr10"] = 9; chr2row["chr11"] = 10; chr2row["chr12"] = 11;
+	chr2row["chr13"] = 12; chr2row["chr14"] = 13; chr2row["chr15"] = 14; chr2row["chr16"] = 15;
+	chr2row["chr17"] = 16; chr2row["chr18"] = 17; chr2row["chr19"] = 18; chr2row["chr20"] = 19;
+	chr2row["chr21"] = 20; chr2row["chrX"] = 21;
+	
+	/**std::map<int,std::string> row2chr;
+	chr2row[0] = "chr1"; chr2row[1] = "chr2"; chr2row[2] = "chr3"; chr2row[3] = "chr4";
+	chr2row[4] = "chr5"; chr2row[5] = "chr6"; chr2row[6] = "chr6"; chr2row[7] = "chr7";
+	chr2row[8] = "chr9"; chr2row[9] = "chr10"; chr2row[10] = "chr11"; chr2row[11] = "chr12";
+	chr2row[12] = "chr13"; chr2row[13] = "chr14"; chr2row[14] = "chr15"; chr2row[15] = "chr16";
+	chr2row[16] = "chr17"; chr2row[17] = "chr18"; chr2row[18] = "chr19"; chr2row[19] = "chr20";
+	chr2row[20] = "chr21"; chr2row[21] = "chrX";**/
+	
+	Rcpp::NumericMatrix out(22,22);
+	double totPets = 0.0;
+	
+	double totPetsChrom[22] ={0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0}
+	
+	//Begin to iterate through file
+	ifstream file1(bedpefile_nodup.c_str());
+    while (getline(file1, line))
+    {
+      // split lines and determine bin
+      std::vector<std::string> fields = string_split(line,"\t");
+	  std::string chrom1 = fields[0];
+	  std::string chrom2 = fields[3];
+	  
+      if ((chrom1 == "*") | (chrom2 == "*") | (chrom1==chrom2))
+      {
+        continue;
+      }
+	  
+	  // tabulate actual counts
+	  int i=chr2row[chrom1]; int j=chr2row[chrom2];
+	  out(i,j)=out(i,j)+1;
+	  out(j,i)=out(j,i)+1;
+	  
+	  //track global pet counts and chromosome specific counts
+	  totPets=totPets+1.0;
+	  totPetsChrom[chr2row[chrom1]] =totPetsChrom[chr2row[chrom1]]+1;
+	  totPetsChrom[chr2row[chrom2]] =totPetsChrom[chr2row[chrom2]]+1;
+  	}
+	
+	// get probabilities for each chromosome
+	int i,j;
+	for(i=0; i<22; i++) {
+		totPetsChrom[i] = totPetsChrom[i]/totPets;
+	}
+	
+	// normalize by expected inter-chromosomal counts
+	for(i=0; i<22; i++) 
+	{
+		for(j=0; j<22; j++) 
+		{
+			double expectedVal = totPets*totPetsChrom[i]*totPetsChrom[j];
+			out(i,j) = out(i,j)/expectedVal;
+			out(j,i) = out(j,i)/expectedVal;
+		}
+	}
+	
+	return out;
 }
 
 

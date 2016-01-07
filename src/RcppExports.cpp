@@ -105,6 +105,26 @@ BEGIN_RCPP
     return R_NilValue;
 END_RCPP
 }
+// getRawInterChromCounts
+Rcpp::NumericMatrix getRawInterChromCounts(std::string bedpefile_nodup);
+RcppExport SEXP mango_getRawInterChromCounts(SEXP bedpefile_nodupSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope __rngScope;
+    Rcpp::traits::input_parameter< std::string >::type bedpefile_nodup(bedpefile_nodupSEXP);
+    __result=Rcpp::wrap(getRawInterChromCounts(bedpefile_nodup));
+    return __result;
+END_RCPP
+}
+// getNormInterChromCounts
+Rcpp::NumericMatrix getNormInterChromCounts(std::string bedpefile_nodup);
+RcppExport SEXP mango_getNormInterChromCounts(SEXP bedpefile_nodupSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope __rngScope;
+    Rcpp::traits::input_parameter< std::string >::type bedpefile_nodup(bedpefile_nodupSEXP);
+    __result=Rcpp::wrap(getNormInterChromCounts(bedpefile_nodup));
+    return __result;
+END_RCPP
+}
 // buildBedpefromBam
 void buildBedpefromBam(std::string bam1, std::string bam2, std::string bedpefile);
 RcppExport SEXP mango_buildBedpefromBam(SEXP bam1SEXP, SEXP bam2SEXP, SEXP bedpefileSEXP) {
