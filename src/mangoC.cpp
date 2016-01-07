@@ -864,6 +864,7 @@ Rcpp::NumericMatrix getRawInterChromCounts(std::string bedpefile_nodup)
 	
 	//Begin to iterate through file
 	ifstream file1(bedpefile_nodup.c_str());
+	std::string line;
     while (getline(file1, line))
     {
       // split lines and determine bin
@@ -908,10 +909,11 @@ Rcpp::NumericMatrix getNormInterChromCounts(std::string bedpefile_nodup)
 	Rcpp::NumericMatrix out(22,22);
 	double totPets = 0.0;
 	
-	double totPetsChrom[22] ={0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0}
+	double totPetsChrom[22] ={0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0};
 	
 	//Begin to iterate through file
 	ifstream file1(bedpefile_nodup.c_str());
+	std::string line;
     while (getline(file1, line))
     {
       // split lines and determine bin
