@@ -15,7 +15,8 @@ callInteractions_wrapper <- function(	outname,
 										MHT="all",
 										extendreads=120,
 										verboseoutput=FALSE,
-										saveRoutput=TRUE)
+										saveRoutput=TRUE,
+										set.manual.cutoff=NA)
 {
 	#Step 1: Establish various filenames required
     tagAlignfile       	= paste(outname,".tagAlign",sep="")
@@ -54,17 +55,26 @@ callInteractions_wrapper <- function(	outname,
 	# Sub-Step 1: 	Generate a distance file wherein each line represents a single PET with the distance between PETs and whether 
 	#			or not they are on the same strand or not. This only outputs PETs within a certain distance range
 	#			defined 
-    print ("determining self-ligation distance")
-    makeDistanceFile(bedpefilesortrmdup,distancefile,distcutrangemin,distcutrangemax)
+	distancecutoff <- NULL
 	
-	# Sub-Step 2:	(1) Use the distance file bin PETs into 50 bins between distcutmin and distcutmax
-	#				(2) Calculate the percent of PETs on opposing strands (self-ligation products)[P]
-	#				(3) Self-ligation distance cutoff is determined as the largest bin for which P >= biastCut
-    distancecutoff = calcDistBias(	distancefile,
-									distancecutpdf=distancecutpdf,
-                                  	range=c(distcutrangemin,distcutrangemax),
-                                  	biascut= biascut)
-	print (paste("self-ligation cutoff =",distancecutoff))
+	if(is.na(set.manual.cutoff))
+	{
+		print ("determining self-ligation distance de-novo")
+	    makeDistanceFile(bedpefilesortrmdup,distancefile,distcutrangemin,distcutrangemax)
+	
+		# Sub-Step 2:	(1) Use the distance file bin PETs into 50 bins between distcutmin and distcutmax
+		#				(2) Calculate the percent of PETs on opposing strands (self-ligation products)[P]
+		#				(3) Self-ligation distance cutoff is determined as the largest bin for which P >= biastCut
+	    distancecutoff = calcDistBias(	distancefile,
+										distancecutpdf=distancecutpdf,
+	                                  	range=c(distcutrangemin,distcutrangemax),
+	                                  	biascut= biascut)
+		print (paste("self-ligation cutoff =",distancecutoff))
+	} else {
+		print ("setting user-specified self-ligation distance cutoff")
+		distancecutoff = set.manual.cutoff
+		print (paste("self-ligation cutoff =",distancecutoff))
+	}
 	
 	
 	#Step 4: Begin to assemble information about putatitve peak pairs
