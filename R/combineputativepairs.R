@@ -11,6 +11,7 @@ combineputativepairs <- function (chromosomes,outname)
     if (length(readLines(pairsfile)) == 0){next}
   
     putpairs = rbind(putpairs,read.table(pairsfile,header=FALSE,sep="\t"))
+	print(paste("Loaded : ",chrom))
   }
   # return
   return (putpairs)
