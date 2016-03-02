@@ -25,6 +25,10 @@ buildBedpefromBam <- function(bam1, bam2, bedpefile) {
     invisible(.Call('mango_buildBedpefromBam', PACKAGE = 'mango', bam1, bam2, bedpefile))
 }
 
+buildBigBedFile <- function(rmdupbedpefile, outputFile) {
+    invisible(.Call('mango_buildBigBedFile', PACKAGE = 'mango', rmdupbedpefile, outputFile))
+}
+
 mergeTwoBam <- function(inputBam1, inputBam2, outputBam) {
 	invisible(.Call('mango_mergeTwoBam', PACKAGE = 'mango', inputBam1, inputBam2, outputBam))
 }
@@ -35,6 +39,10 @@ subSampleBam <- function(bamFile1, bamFile2, outputBamFile1, outputBamFile2, sam
 
 getRawInterChromCounts <- function(bedpefile_nodup) {
 	invisible(.Call('mango_getRawInterChromCounts', PACKAGE='mango',bedpefile_nodup))
+}
+
+getContactFreqMatrix <- function(filename1, filename2, fragFile, dist) {
+	invisible(.Call('mango_getContactFreqMatrix', PACKAGE='mango',filename1,filename2,fragFile,dist))
 }
 
 getNormInterChromCounts <- function(bedpefile_nodup) {

@@ -893,6 +893,65 @@ Rcpp::NumericMatrix getRawInterChromCounts(std::string bedpefile_nodup)
 	return out;
 }
 
+// Define a function to take two bedtools intersect files and return a contact matrix
+// [[Rcpp::export]]
+Rcpp::NumericMatrix getContactFreqMatrix(std::string filename1, std::string filename2, std::string fragFile,int dist)
+{	
+	//Interate through frag file and figure out how many rows we need as well as a map of position to row
+	std::map<std::string,int> frag2row;
+	ifstream file1(fragFile.c_str());
+	std::string line;
+	int row = 0;
+	while(getline(file1,line))
+	{
+		std::vector<std::string> fields = string_split(line,"\t");
+		std::string key = fields[0]+'_'+fields[1]+'_'+fields[2];
+		frag2row[key] = row;
+		row = row+1;
+	}
+	
+	//Instantiate the matrix
+	Rcpp::NumericMatrix out(row,row);
+	
+	//Begin to iterate through file
+	ifstream file1_stream(filename1.c_str());
+	ifstream file2_stream(filename2.c_str());
+	std::string line1; std::string line2;
+    while (getline(file1_stream, line1))
+    {
+		getline(file2_stream,line2);
+		std::vector<std::string> fields1 = string_split(line1,"\t");
+		std::vector<std::string> fields2 = string_split(line2,"\t");
+		
+		if(fields1.size()<6 | fields2.size()<6) {
+			std::cerr << "Improper line." << std::endl;
+		}
+		
+		std::string key1 = fields1[3] + '_' +fields1[4] + '_' + fields1[5];
+		std::string key2 = fields2[3] + '_' +fields2[4] + '_' + fields2[5];
+		
+		// exclude self-ligation PETs
+		int thisDist = ((StringToInt(fields2[2])+StringToInt(fields2[1]))/2)-((StringToInt(fields1[2])+StringToInt(fields1[1]))/2);
+		if(thisDist <= dist) {
+			continue;
+		}
+		
+		// exclude interchromosomal contacts
+		if(fields1[0] != fields2[0]) {
+			continue;
+		}
+		
+		
+		int i = frag2row[key1];
+		int j = frag2row[key2];
+		
+		out(i,j) = out(i,j)+1;
+		out(j,i) = out(j,i)+1;
+	}
+	
+	return out;
+}
+
 // Define a function that builds a normalized inter-chromosomal contact matrix from a bedpefile
 // [[Rcpp::export]]
 Rcpp::NumericMatrix getNormInterChromCounts(std::string bedpefile_nodup)
@@ -921,19 +980,13 @@ Rcpp::NumericMatrix getNormInterChromCounts(std::string bedpefile_nodup)
 	  std::string chrom1 = fields[0];
 	  std::string chrom2 = fields[3];
 	  
-      if ((chrom1 == "*") | (chrom2 == "*") | (chrom1==chrom2))
+      if ((chrom1 == "*") | (chrom2 == "*") | (chrom1==chrom2) | chr2row.find(chrom1)==chr2row.end() | chr2row.find(chrom2)==chr2row.end())
       {
         continue;
       }
 	  
-	  //track global pet counts (this will include counts to chromosomes we must not care about; but not interchromosomal counts)
+	  //track global pet counts (this will include counts to chromosomes we must not care about; but not intrachromosomal counts)
 	  totPets=totPets+1.0;
-	  
-	  //disregard any chromosome not mentioned above
-	  if(chr2row.find(chrom1)==chr2row.end() | chr2row.find(chrom2)==chr2row.end())
-	  {
-		  continue;
-	  }
 	  
 	  //tabulate interchoromosomal counts for only pairs we care about
 	  totPetsChrom[chr2row[chrom1]] =totPetsChrom[chr2row[chrom1]]+1;
@@ -947,9 +1000,11 @@ Rcpp::NumericMatrix getNormInterChromCounts(std::string bedpefile_nodup)
   	}
 	
 	// get probabilities for each chromosome
+	std::cerr << totPets << std::endl;
 	int i,j;
 	for(i=0; i<23; i++) {
 		totPetsChrom[i] = totPetsChrom[i]/totPets;
+		std::cerr << totPetsChrom[i] << std::endl;
 	}
 	
 	// normalize by expected inter-chromosomal counts
@@ -959,111 +1014,104 @@ Rcpp::NumericMatrix getNormInterChromCounts(std::string bedpefile_nodup)
 		{
 			double expectedVal = totPets*totPetsChrom[i]*totPetsChrom[j];
 			out(i,j) = out(i,j)/expectedVal;
-			out(j,i) = out(j,i)/expectedVal;
 		}
 	}
 	
 	return out;
 }
 
-
-//// Define a function that removes duplicates from a bedpe file
-//// [[Rcpp::export]]
-//std::vector< int > removeDupBedpe(std::string infile,std::string outfile , bool renamePets = true)
-//{
-//    // initialize petnumer
-//    int petnumber  = 0;
-//    int alllines   = 0;
-//    int duplines   = 0;
-//    int interchromosomal = 0;
-//    int intrachromosomal = 0;
-//    
-//    // arguments
-//    ifstream file1(infile.c_str());
-//    ofstream bedpefilestream (outfile.c_str());
-// 
-//    // read in file line by line store currentline and last line
-//    std::string lastline;
-//    std::string currline;
-//    while (getline(file1, currline))
-//    {
-//        // increment counter 
-//        alllines++;
-//        
-//        // split lines
-//        std::vector<std::string> lastEall = string_split(lastline,"\t");
-//        std::vector<std::string> currEall = string_split(currline,"\t");
-//        std::vector<std::string> lastE;
-//        std::vector<std::string> currE;
-//        
-//        // print first line
-//        if (lastEall.size() == 0)
-//        {
-//            if (renamePets == true)
-//            {
-//              petnumber ++;
-//              currEall[6] = "obs_" +  IntToString(petnumber);
-//            }
-//          
-//            bedpefilestream << vector_join(currEall,"\t");;
-//            bedpefilestream << "\n";
-//            lastline = currline;
-//            continue;
-//        }
-//        
-//        // make shorter line for comparison
-//        for (int i=0; i<6; i++)
-//        {
-//            lastE.push_back(lastEall[i]);
-//            currE.push_back(currEall[i]);
-//        }
-//        std::string currlineshort = vector_join(currE,"_");
-//        std::string lastlineshort = vector_join(lastE,"_");
-//        
-//        // if duplicates continue
-//        if (lastlineshort == currlineshort)
-//        {
-//            lastline = currline;
-//            duplines++;
-//            continue;
-//        }
-//        
-//        // print out non duplicates
-//        if (renamePets == true)
-//        {
-//          petnumber++;
-//          currEall[6] = "obs_" +  IntToString(petnumber);
-//        }
-//        
-//        bedpefilestream << vector_join(currEall,"\t");;
-//        bedpefilestream << "\n";
-//        
-//        if ((currEall[0] == currEall[4]) & (currEall[0]  != "*") & (currEall[4]  != "*")  )
-//        {
-//          interchromosomal++;
-//        }
-//        if (currEall[0] != currEall[4]  & (currEall[0]  != "*") & (currEall[4]  != "*") )
-//        {
-//          intrachromosomal++;
-//        }
-//
-//        // update last line
-//        lastline = currline;
-//    }
-//    
-//    // close files
-//    file1.close();
-//    bedpefilestream.close();
-//    
-//    
-//    // report results
-//    std::vector< int > rmdupresults;
-//    rmdupresults.push_back(duplines);
-//    rmdupresults.push_back(petnumber);
-//    rmdupresults.push_back(interchromosomal);
-//    rmdupresults.push_back(intrachromosomal);
-//    return(rmdupresults);
-//}
+Rcpp::NumericMatrix getIntraChromCounts(std::string bedpefile_nodup, int binSize)
+{
+	//Instantiate the lengths of each chromosome
+	std::map<std::string,int> chr2length;
+	chr2length["chr1"]=249250621;
+	chr2length["chr2"]=243199373;
+	chr2length["chr3"]=198022430;
+	chr2length["chr4"]=191154276;
+	chr2length["chr5"]=180915260;
+	chr2length["chr6"]=171115067;
+	chr2length["chr7"]=159138663;
+	chr2length["chr8"]=146364022;
+	chr2length["chr9"]=141213431;
+	chr2length["chr10"]=135534747;
+	chr2length["chr11"]=135006516;
+	chr2length["chr12"]=133851895;
+	chr2length["chr13"]=115169878;
+	chr2length["chr14"]=107349540;
+	chr2length["chr15"]=102531392;
+	chr2length["chr16"]=90354753;
+	chr2length["chr17"]=81195210;
+	chr2length["chr18"]=78077248;
+	chr2length["chr19"]=59128983;
+	chr2length["chr20"]=63025520;
+	chr2length["chr21"]=48129895;
+	chr2length["chr22"]=51304566;
+	chr2length["chrX"]=155270560;
+	
+	//Iterate through each chromosome and figure out the number of bins we need
+	std::map<std::string,std::map<int,int> > pos2row;
+	int totBins = 0;
+	typedef std::map<std::string,int>::iterator it_type;
+	int row = 0;
+	for(it_type iterator = chr2length.begin(); iterator != chr2length.end(); iterator++)
+	{
+	    std::string chrom = iterator->first;
+		int length = iterator->second;
+		
+		int dividend = (int)length/binSize;
+		int remain = length%binSize;
+		int numBinsForChrom = dividend;
+		
+		totBins = totBins+dividend;
+		if(remain>0) {
+			totBins = totBins+1;
+			numBinsForChrom = numBinsForChrom+1;
+		}
+		
+		int i;
+		for(i=1; i<=numBinsForChrom; i++)
+		{
+			std::string key = IntToString(i*binSize);
+			//pos2row[chrom][key] = row;
+			row = row+1;
+		}
+	}
+	
+	//Instantiate the output matrix
+	Rcpp::NumericMatrix out(totBins,totBins);
+	
+	//Begin to iterate through the the nodup bedpe file
+	ifstream file1(bedpefile_nodup.c_str());
+	std::string line;
+    while (getline(file1, line))
+    {
+		// split lines and determine bin
+		std::vector<std::string> fields = string_split(line,"\t");
+		std::string chrom1 = fields[0];
+		std::string start1 = fields[1];
+		std::string end1 = fields[2];
+		std::string chrom2 = fields[3];
+		std::string start2 = fields[4];
+		std::string end2 = fields[5];
+		
+		//disregard if both ends aren't mapped
+		if(chrom1=="*" | chrom2=="*" | chrom1!=chrom2) {
+			continue;
+		}
+		
+		//compute key for each pet
+		std::string pos1 = IntToString(std::stoi(start1)+std::stoi(end1)/2);
+		std::string pos2 = IntToString(std::stoi(start2)+std::stoi(end2)/2);
+		
+		//std::string key1 = chrom1+'--'+pos1;
+		//std::string key2;
+		 
+  		
+		
+  }
+  
+  return out;
+}
 
 // Define a class to keep track of peak information
 class peak{
@@ -1096,8 +1144,6 @@ public:
   int linking;
   int distance;
 };
-
-
 
 // Define a function that puts pairs together
 // [[Rcpp::export]]
@@ -1296,7 +1342,6 @@ void findPairs(std::string overlapfile, std::string petpairsfile,std::string int
 
 }
 
-
 // Define a function splits bed file by chromosome
 // [[Rcpp::export]]
 std::vector<std::string> splitBedbyChrom(std::string bedfile,std::string outnamebase)
@@ -1337,7 +1382,6 @@ std::vector<std::string> splitBedbyChrom(std::string bedfile,std::string outname
     
     return (chromosomes);
 }
-
 
 // Define a function splits bedpe file into reads and PETs by chromosome
 // [[Rcpp::export]]
@@ -1388,8 +1432,6 @@ void makeDistanceFile(std::string bedpefilesortrmdup,std::string distancefile,in
     filein.close();
     fileout.close();
 }
-
-
 
 // Define a function that joins file (normally files previously split by chromosome)
 // [[Rcpp::export]]
@@ -1464,7 +1506,6 @@ void DeterminePeakDepthsC(std::string temppeakoverlap,std::string peaksfileslopd
   fileOUT.close();
 
 }
-
 
 // Define a function removes duplicates from a bedpe file
 // [[Rcpp::export]]
@@ -1592,6 +1633,53 @@ std::vector< std::string > removeDups(std::string bedpein,std::string outnamebas
   
   return(rmdupresults);
 }
+
+//	Define a function to take a rmdup bedpe file and process it for bigBedFormat
+// [[Rcpp::export]]
+void buildBigBedFile(std::string rmdupbedpefile, std::string outputFile)
+{
+	//open and iterate through file
+    ifstream file1(rmdupbedpefile.c_str());
+	ofstream outputstream ( outputFile.c_str() );
+  
+    std::string line;
+    while (getline(file1, line))
+	{
+		//Split line
+	  std::vector<std::string> fields = string_split(line,"\t");
+	  
+	  std::string chrom1 = fields[0];
+	  std::string start1 = fields[1];
+	  std::string end1 = fields[2];
+	  
+	  std::string chrom2 = fields[3];
+	  std::string start2 = fields[4];
+	  std::string end2 = fields[5];
+	  
+	  //Skip unmapped or interchromosmal pets
+	  if(chrom1=="*" || chrom2=="*" || chrom1!=chrom2) {
+	  	continue;
+	  }
+	  
+	  // Setup output
+      std::vector<std::string> outputvector_master;
+	  std::vector<std::string> outputvector_mini;
+	  
+	  outputvector_mini.push_back(chrom2);
+	  outputvector_mini.push_back(start2);
+	  outputvector_mini.push_back(end2);
+	  std::string part2 = vector_join(outputvector_mini,",");
+	  
+      outputvector_master.push_back(chrom1);
+      outputvector_master.push_back(chrom2);
+      outputvector_master.push_back(name1);
+      outputvector_master.push_back(part2);
+      std::string outputstring = vector_join(outputvector,"\t");
+      outputstream << outputstring;
+      outputstream << "\n";
+  	}
+}
+
 
 
 // Define a function splits bedpe file into reads and PETs by chromosome

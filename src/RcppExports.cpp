@@ -105,6 +105,31 @@ BEGIN_RCPP
     return R_NilValue;
 END_RCPP
 }
+// build bigBedFile
+void buildBigBedFile(std::string rmdupbedpefile, std::string outputFile);
+RcppExport SEXP mango_buildBigBedFile(SEXP rmdupbedpefileSEXP, SEXP outputFileSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope __rngScope;
+    Rcpp::traits::input_parameter< std::string >::type rmdupbedpefile(rmdupbedpefileSEXP);
+    Rcpp::traits::input_parameter< std::string >::type outputFile(outputFileSEXP);
+    buildBigBedFile(rmdupbedpefile,outputFile);
+    return R_NilValue;
+END_RCPP
+}
+// getContactFreqMatrix
+Rcpp::NumericMatrix getContactFreqMatrix(std::string filename1, std::string filename2, std::string fragFile, int dist);
+RcppExport SEXP mango_getContactFreqMatrix(SEXP filename1SEXP, SEXP filename2SEXP,SEXP fragFileSEXP, SEXP distSEXP) {
+BEGIN_RCPP
+	Rcpp::RObject __result;
+    Rcpp::RNGScope __rngScope;
+    Rcpp::traits::input_parameter< std::string >::type filename1(filename1SEXP);
+	Rcpp::traits::input_parameter< std::string >::type filename2(filename2SEXP);
+	Rcpp::traits::input_parameter< std::string >::type fragFile(fragFileSEXP);
+	Rcpp::traits::input_parameter< int >::type dist(distSEXP);
+    __result=Rcpp::wrap(getContactFreqMatrix(filename1,filename2,fragFile,dist));
+    return __result;
+END_RCPP
+}
 // getRawInterChromCounts
 Rcpp::NumericMatrix getRawInterChromCounts(std::string bedpefile_nodup);
 RcppExport SEXP mango_getRawInterChromCounts(SEXP bedpefile_nodupSEXP) {
