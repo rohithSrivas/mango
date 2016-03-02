@@ -1640,7 +1640,7 @@ void buildBigBedFile(std::string rmdupbedpefile, std::string outputFile)
 {
 	//open and iterate through file
     ifstream file1(rmdupbedpefile.c_str());
-	ofstream outputstream ( outputFile.c_str() );
+	ofstream outputstream (outputFile.c_str());
   
     std::string line;
     while (getline(file1, line))
@@ -1671,10 +1671,10 @@ void buildBigBedFile(std::string rmdupbedpefile, std::string outputFile)
 	  std::string part2 = vector_join(outputvector_mini,",");
 	  
       outputvector_master.push_back(chrom1);
-      outputvector_master.push_back(chrom2);
-      outputvector_master.push_back(name1);
+      outputvector_master.push_back(start1);
+      outputvector_master.push_back(end1);
       outputvector_master.push_back(part2);
-      std::string outputstring = vector_join(outputvector,"\t");
+      std::string outputstring = vector_join(outputvector_master,"\t");
       outputstream << outputstring;
       outputstream << "\n";
   	}
